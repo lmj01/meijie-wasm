@@ -1,0 +1,15 @@
+{
+  "name": "meijie-wasm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:draco": "cd cpp && cmake --preset release && cmake --build --preset release",
+    "setup:draco": "node scripts/setup_wasm_deps.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "workspaces": [
+    "packages/*"
+  ]
+}
