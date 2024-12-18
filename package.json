@@ -5,11 +5,15 @@
   "main": "index.js",
   "scripts": {
     "build:draco": "cd cpp && cmake --preset release && cmake --build --preset release",
-    "setup:draco": "node scripts/setup_wasm_deps.mjs"
+    "setup:wasm": "node scripts/setup_wasm_deps.mjs"
   },
   "author": "",
   "license": "ISC",
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3"
+  }
 }

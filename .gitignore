@@ -1,1 +1,4 @@
 node_modules
+build
+packages/three-draco/index.css
+packages/three-draco/index.css.map

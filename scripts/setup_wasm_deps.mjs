@@ -9,8 +9,8 @@ const BUILD_DIR = path.resolve(CPP_ROOT, 'build');
 const EMSDK_DIR_NAME = 'emsdk';
 const EMSDK_DIR = path.resolve(BUILD_DIR, EMSDK_DIR_NAME);
 
-const OCCT_DIR_NAME = 'occt';
-const OCCT_DIR = path.resolve(BUILD_DIR, OCCT_DIR_NAME);
+const DRACO_DIR_NAME = 'draco';
+const DRACO_DIR = path.resolve(BUILD_DIR, DRACO_DIR_NAME);
 
 /**
  * Due to a WebXR error, we need to use --skipLibCheck
@@ -27,6 +27,13 @@ async function fixEmscripten() {
     console.log(`Fixed emscripten.py`);
 }
 
+async function updateSubmoduleDraco() {
+    // await execAsync(`git submodule init`);
+    console.log(DRACO_DIR)
+    await execAsync(`cd ${DRACO_DIR} && git submodule init`);
+    await execAsync(`cd ${DRACO_DIR} && git submodule update -f --`);
+}
+
 const libs = [
     {
         name: 'emscripten',
@@ -40,8 +47,8 @@ const libs = [
         name: 'draco',
         url: 'https://github.com/google/draco.git',
         tag: '1.5.7',
-        dir: OCCT_DIR,
-        action: [],
+        dir: DRACO_DIR,
+        action: [updateSubmoduleDraco],
         command: undefined
     }
 ]

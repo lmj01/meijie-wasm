@@ -1,0 +1,15 @@
+{
+  "name": "tool",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {
+    "bootstrap": "^5.3.3",
+    "sass": "^1.83.0"
+  },
+  "scripts": {
+    "css": "node css.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

@@ -1,0 +1,14 @@
+@import "../../../node_modules/bootstrap/scss/bootstrap.scss";
+
+$wWebkitScrollbar: 5px !default;
+::-webkit-scrollbar {
+    width: $wWebkitScrollbar;
+    background: $secondary; 
+}
+::-webkit-scrollbar-thumb {    
+    background: $primary;
+}
+
+div[aria-hidden="true"] {
+    display: none !important;
+}
