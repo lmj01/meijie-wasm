@@ -47,6 +47,8 @@ const libs = [
         name: 'draco',
         url: 'https://github.com/google/draco.git',
         tag: '1.5.7',
+        // url: 'https://github.com/lmj01/draco.git',
+        // tag: '8786740086a9f4d83f44aa83badfbea4dce7a1b5',        
         dir: DRACO_DIR,
         action: [updateSubmoduleDraco],
         command: undefined

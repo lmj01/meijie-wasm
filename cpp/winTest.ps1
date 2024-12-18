@@ -4,6 +4,7 @@ $encoder = Join-Path $dracoBuildPath "Release/draco_encoder.exe"
 $decoder = Join-Path $dracoBuildPath "Release/draco_decoder.exe"
 
 $assetsFolder1 = Join-Path $curPwd "../packages/three-draco/src/assets"
-$inDrc = Join-Path $assetsFolder1 "bunny.drc"
+# $inDrc = Join-Path $assetsFolder1 "bunny.drc"
+$inDrc = Join-Path $assetsFolder1 "bunny1734507496778.drc"
 # 解码
 &$decoder -i $inDrc -o bunny.ply
