@@ -1,4 +1,8 @@
 node_modules
-build
+cpp/build
+cpp/builddraco
+cpp/bunny.*
+
 packages/three-draco/index.css
 packages/three-draco/index.css.map
+

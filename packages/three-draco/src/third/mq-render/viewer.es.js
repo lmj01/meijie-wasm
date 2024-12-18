@@ -29814,7 +29814,6 @@ class BasePath {
         r: d
       });
     }
-    console.log("tail", showTail);
     if (showTail && 0 !== offset) {
       for (const o of l2) a.push({
         p: end - o.x * offset,
@@ -31909,7 +31908,7 @@ const materialStandard = (bufferGeo, options) => {
   }
   return material;
 };
-const geometry2Mesh = (bufferGeo, options) => {
+const geometry2Mesh = (bufferGeo, options = {}) => {
   const code = options.code || 2;
   const material = code == 1 ? materialGumShader() : code == 2 ? materialStandard(bufferGeo, options) : code == 3 ? materialToothCrownBasic(bufferGeo, options) : materialPhong(bufferGeo, options);
   const mesh = new Mesh(bufferGeo, material);

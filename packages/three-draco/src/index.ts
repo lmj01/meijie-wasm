@@ -1,4 +1,4 @@
-import { MqMultiViewEditor, alias3, PathLoader } from './third/mq-render/viewer.es'
+import { MqMultiViewEditor, alias3, PathLoader, geometry2Mesh } from './third/mq-render/viewer.es'
 import drcBunny from './assets/bunny.drc?url';
 const app3 = new MqMultiViewEditor();
 const viewState = [
@@ -17,11 +17,14 @@ const viewState = [
 
 async function loadModel(path:string) {
     const loader = new PathLoader(path, {drcPath:'libs/draco/'});
-    const res = await loader.load(path, function(){        
+    const geo = await loader.load(path, function(){        
         const e = arguments[0];
         console.log(e);
     });
-    console.log(res);
+    const mesh = geometry2Mesh(geo);
+    mesh.scale.multiplyScalar(100);
+    console.log(mesh)
+    app3.add(mesh);
 }
 
 window.onload = ()=>{

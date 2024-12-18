@@ -30,8 +30,8 @@ async function fixEmscripten() {
 async function updateSubmoduleDraco() {
     // await execAsync(`git submodule init`);
     console.log(DRACO_DIR)
-    await execAsync(`cd ${DRACO_DIR} && git submodule init`);
-    await execAsync(`cd ${DRACO_DIR} && git submodule update -f --`);
+    await execAsync(`cd ${DRACO_DIR} && git submodule sync`);
+    await execAsync(`cd ${DRACO_DIR} && git submodule update --init -f --recursive`);
 }
 
 const libs = [
