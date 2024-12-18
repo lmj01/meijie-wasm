@@ -6,3 +6,4 @@ cpp/bunny.*
 packages/three-draco/index.css
 packages/three-draco/index.css.map
 
+*.swp

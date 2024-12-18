@@ -1,6 +1,6 @@
 #!/bin/bash
-SOURCE_DIR="./build/draco"
-BUILD_DIR="./builddraco"
+SOURCE_DIR="build/draco"
+BUILD_DIR="builddraco"
 
 if [ ! -d "${BUILD_DIR}" ]; then
     mkdir -p "${BUILD_DIR}"
@@ -8,7 +8,7 @@ if [ ! -d "${BUILD_DIR}" ]; then
 else 
     echo "fold exist: $BUILD_DIR"
 fi
-cd "${BUILD_DIR}"
+#cd "${BUILD_DIR}"
 
 cmake "${SOURCE_DIR}" -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" -A x64 "${BUILD_DIR}"
 make 
