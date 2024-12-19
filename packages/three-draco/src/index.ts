@@ -3,7 +3,8 @@ import { loadJavaScriptFile, toLocalFile } from '../../tool/dom'
 // import DracoEncoderModule from './assets/draco/draco_encoder_gltf_nodejs';
 // import drcBunny0 from './assets/bunny.drc?url';
 import drcBunny0 from './assets/bunny.three.drc?url';
-import drcBunny1 from './assets/bunny.npm.drc?url';
+// import drcBunny1 from './assets/bunny.npm.drc?url';
+import drcBunny1 from './assets/test.cplusplus.drc?url';
 const app3 = new MqMultiViewEditor();
 let gDracoEncoderModule: any;
 let gDracoDecoderModule: any;
@@ -55,14 +56,14 @@ async function decodeGeometry(path: string) {
     const decodeBuffer = new gDracoDecoderModule.DecoderBuffer();
     decodeBuffer.Init(new Int8Array(buffer), buffer.byteLength);
     const geometryType = decoder.GetEncodedGeometryType(decodeBuffer);
-    console.log(path, '- geometry type-', geometryType)
+    console.log(path, 'geometry type', geometryType)
     let dracoGeometry:any;    
     let status;
     if (geometryType === gDracoDecoderModule.TRIANGULAR_MESH) {
         dracoGeometry = new gDracoDecoderModule.Mesh();
         status = decoder.DecodeBufferToMesh(decodeBuffer, dracoGeometry);
     } else {
-        const errorMsg = 'Error: Unknown geometry type.';
+        const errorMsg = `Error: Unknown geometry type ${geometryType}.`;
         console.error(errorMsg);
     }
     gDracoDecoderModule.destroy(decodeBuffer);
@@ -70,10 +71,11 @@ async function decodeGeometry(path: string) {
     console.log(path, dracoGeometry, dracoGeometry.num_attributes());
 
     // 暂时拿不到这个字段
-    const idFlag = decoder.GetAttributeIdByName(dracoGeometry, 'flag');
-    console.log(path, idFlag);
+    // const idFlag = decoder.GetAttributeIdByName(dracoGeometry, 'flag');
+    // console.log(path, idFlag);
 
-    Object.keys(attrTypes).forEach(attr=>{
+    Object.keys(attrTypes).forEach(attr=>{        
+        console.log(path, attr)
         const id = decoder.GetAttributeId(dracoGeometry, gDracoDecoderModule[attr])
         const attrs = decoder.GetAttribute(dracoGeometry, id);
         const attr_type = attrs.attribute_type();
