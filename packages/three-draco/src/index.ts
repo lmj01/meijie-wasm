@@ -1,10 +1,14 @@
-import { MqMultiViewEditor, alias3, PathLoader, geometry2Mesh } from './third/mq-render/viewer.es'
+import { MqMultiViewEditor, alias3, PathLoader, geometry2Mesh, mesh2drc, bindDracoEncoder } from './third/mq-render/viewer.es'
 import { loadJavaScriptFile, toLocalFile } from '../../tool/dom'
 // import DracoEncoderModule from './assets/draco/draco_encoder_gltf_nodejs';
-import drcBunny from './assets/bunny.drc?url';
-// import drcBunny from './assets/bunny1734507496778.drc?url';
+// import drcBunny0 from './assets/bunny.drc?url';
+import drcBunny0 from './assets/bunny.three.drc?url';
+import drcBunny1 from './assets/bunny.npm.drc?url';
 const app3 = new MqMultiViewEditor();
 let gDracoEncoderModule: any;
+let gDracoDecoderModule: any;
+let app:any = {};
+(<any>window).app = app;
 const viewState = [
     // single scene
     {
@@ -19,17 +23,84 @@ const viewState = [
     },
 ];
 
+const attrTypes = { 
+    POSITION: 0,
+    NORMAL: 1,
+    COLOR: 2,
+    GENERIC: 4,
+}
+
 async function loadModel(path: string) {
-    const loader = new PathLoader(path, { drcPath: 'libs/draco/' });
+    console.log('load modle path ', path)
+    const loader = new PathLoader(path, {
+        drcPath: 'libs/draco/',
+        code: 2,
+    });
     const geo = await loader.load(path, function () {
         const e = arguments[0];
         console.log(e);
     });
+    console.log('load model geometry', geo);
     const mesh = geometry2Mesh(geo);
     mesh.name = 'bunny';
     mesh.scale.multiplyScalar(100);
-    console.log(mesh)
     app3.add(mesh);
+}
+
+async function decodeGeometry(path: string) {
+    const buffer = await fetch(path).then(res => res.arrayBuffer());
+    console.log(path, buffer);
+    // Decode mesh
+    const decoder = new gDracoDecoderModule.Decoder();
+    const decodeBuffer = new gDracoDecoderModule.DecoderBuffer();
+    decodeBuffer.Init(new Int8Array(buffer), buffer.byteLength);
+    const geometryType = decoder.GetEncodedGeometryType(decodeBuffer);
+    console.log(path, '- geometry type-', geometryType)
+    let dracoGeometry:any;    
+    let status;
+    if (geometryType === gDracoDecoderModule.TRIANGULAR_MESH) {
+        dracoGeometry = new gDracoDecoderModule.Mesh();
+        status = decoder.DecodeBufferToMesh(decodeBuffer, dracoGeometry);
+    } else {
+        const errorMsg = 'Error: Unknown geometry type.';
+        console.error(errorMsg);
+    }
+    gDracoDecoderModule.destroy(decodeBuffer);
+    console.log(path, status, status.code(), status.ok())
+    console.log(path, dracoGeometry, dracoGeometry.num_attributes());
+
+    // 暂时拿不到这个字段
+    const idFlag = decoder.GetAttributeIdByName(dracoGeometry, 'flag');
+    console.log(path, idFlag);
+
+    Object.keys(attrTypes).forEach(attr=>{
+        const id = decoder.GetAttributeId(dracoGeometry, gDracoDecoderModule[attr])
+        const attrs = decoder.GetAttribute(dracoGeometry, id);
+        const attr_type = attrs.attribute_type();
+        console.log(path, attr, id, attrs, attrs.size());
+        console.log(attrs.attribute_type(), attrs.data_type(), attrs.byte_stride(), attrs.num_components(), attrs.byte_offset())
+        // console.log(attrs.GetAttributeTransformData());
+        if (attr_type==4) {            
+            const arrDraco = new gDracoDecoderModule.DracoUInt8Array();
+            const arrJs = new Uint8Array(attrs.size());
+            if (decoder.GetAttributeUInt8ForAllPoints(dracoGeometry, attrs, arrDraco)) {
+                for (let i = 0; i < arrDraco.size(); i++) {
+                    arrJs[i] = arrDraco.GetValue(i);
+                }
+                console.log(arrJs);
+            }
+        } else {
+            console.log(attr_type)
+            let arrDraco = new gDracoDecoderModule.DracoFloat32Array();
+            let arrJs = new Float32Array(attrs.size());
+            if (decoder.GetAttributeFloatForAllPoints(dracoGeometry, attrs, arrDraco)) {
+                for (let i = 0; i < arrDraco.size(); i++) {
+                    arrJs[i] = arrDraco.GetValue(i);
+                }
+                console.log(arrJs);
+            }
+        }
+    })
 }
 
 async function encodeGeometry(geo: any) {
@@ -57,47 +128,26 @@ async function encodeGeometry(geo: any) {
     meshBuilder.AddFacesToMesh(newMesh, numFaces, indices);
 
     console.log(Object.keys(geo.attributes))
-    const attrs = { POSITION: 3, NORMAL: 3, COLOR: 3, TEX_COORD: 2 };
-
     Object.keys(geo.attributes).forEach((attr) => {
         const srcAttribute = geo.attributes[attr];
-        let attrType = gDracoEncoderModule['GENERIC'];
+        let attrType;
         if (attr == 'position') attrType = gDracoEncoderModule['POSITION'];
         else if (attr == 'normal') attrType = gDracoEncoderModule['NORMAL'];
         else if (attr == 'color') attrType = gDracoEncoderModule['COLOR'];
         else if (attr == 'uv') attrType = gDracoEncoderModule['TEX_COORD'];
-        console.log(srcAttribute)
-        const attributeDataArray = new Float32Array(srcAttribute.count);
-        for (let i = 0; i < srcAttribute.count; ++i) {
+        else if (attr == 'flag') attrType = gDracoEncoderModule['GENERIC'];
+        else throw new Error(`un-support type ${attr}`)
+        // console.log(srcAttribute)
+        const total = srcAttribute.count * srcAttribute.itemSize;
+        // console.log(attr)
+        const attributeDataArray = new Float32Array(total);
+        for (let i = 0; i < total; ++i) {
             attributeDataArray[i] = srcAttribute.array.at(i);
         }
-        console.log(attrType, attr, attributeDataArray)
+        // console.log(attrType, attr, attributeDataArray, srcAttribute)
         meshBuilder.AddFloatAttributeToMesh(newMesh, attrType, srcAttribute.count,
             srcAttribute.itemSize, attributeDataArray);
     });
-
-    // add uv
-    if (true) {
-        const attrP = geo.attributes.position;
-        const attributeDataArray = new Float32Array(attrP.count);
-        for (let i = 0; i < attrP.count; ++i) {
-            attributeDataArray[i] = 0.5;
-        }
-        meshBuilder.AddFloatAttributeToMesh(newMesh, gDracoEncoderModule['TEX_COORD'], attrP.count,
-            0, attributeDataArray);
-        console.log('uv',attributeDataArray)
-    }
-    // add extra data
-    if (true) {
-        const attrP = geo.attributes.position;
-        const attributeDataArray = new Float32Array(attrP.count);
-        for (let i = 0; i < attrP.count; ++i) {
-            attributeDataArray[i] = 0.1;
-        }
-        meshBuilder.AddFloatAttributeToMesh(newMesh, gDracoEncoderModule['GENERIC'], attrP.count,
-            0, attributeDataArray);
-        console.log('generic',attributeDataArray)
-    }
 
     let encodedData = new gDracoEncoderModule.DracoInt8Array();
     // Set encoding options.
@@ -107,12 +157,12 @@ async function encodeGeometry(geo: any) {
 
     // Encoding.
     console.log("Encoding...");
+    encoder.SetTrackEncodedProperties(true);
     const encodedLen = encoder.EncodeMeshToDracoBuffer(newMesh,
         encodedData);
     gDracoEncoderModule.destroy(newMesh);
-
     if (encodedLen > 0) {
-        console.log("Encoded size is " + encodedLen);
+        console.log("Encoded size is " + encodedLen, encoder.GetNumberOfEncodedPoints(), encoder.GetNumberOfEncodedFaces());
     } else {
         console.log("Error: Encoding failed.");
     }
@@ -128,23 +178,50 @@ async function encodeGeometry(geo: any) {
 
     console.log(outputBuffer);
 
-    // toLocalFile(outputBuffer, `bunny${Date.now()}.drc`);
+    // toLocalFile(outputBuffer, `bunny.npm.drc`);
 }
 
 window.onload = () => {
-    const button = document.createElement('button');
-    button.style.cssText = `position:absolute;top:20px;right:20px;`;
-    button.classList.add('btn', 'btn-primary');
-    button.textContent = '导出obj文件'
-    button.addEventListener('click', async()=>{
+    bindDracoEncoder(`libs/draco/draco_encoder.js`);
+    // button1
+    const button1 = document.createElement('button');
+    button1.style.cssText = `position:absolute;top:20px;right:20px;`;
+    button1.classList.add('btn', 'btn-primary');
+    button1.textContent = 'npm encoder'
+    button1.addEventListener('click', async () => {
         const meshes = app3.findByName('bunny');
         if (meshes.length > 0) {
             await encodeGeometry(meshes[0].geometry);
         }
     }, false);
-    document.body.appendChild(button);
-    loadJavaScriptFile('libs/draco/draco_encoder_gltf_nodejs.js', async () => {
+    document.body.appendChild(button1);
+    // button2
+    const button2 = document.createElement('button');
+    button2.style.cssText = `position:absolute;top:20px;right:150px;`;
+    button2.classList.add('btn', 'btn-primary');
+    button2.textContent = 'three encoder'
+    button2.addEventListener('click', async () => {
+        const meshes = app3.findByName('bunny');
+        if (meshes.length > 0) {
+            const theMesh = meshes[0].clone();
+            const geo = theMesh.geometry;
+            const attrFlag = new Uint8Array(geo.attributes.position.count);
+            attrFlag.fill(1);
+            geo.setAttribute('flag', new alias3.BufferAttribute(attrFlag, 1));
+            const buffer = await mesh2drc(theMesh, {exportFlag: true});
+            toLocalFile(buffer, `bunny.three.drc`);
+        }
+    }, false);
+    document.body.appendChild(button2);
+
+    loadJavaScriptFile('libs/draco/npm/draco_encoder_gltf_nodejs.js', async () => {
         gDracoEncoderModule = await DracoEncoderModule();
+        app.encoderModule = gDracoEncoderModule;
+    });
+    loadJavaScriptFile('libs/draco/npm/draco_decoder_gltf_nodejs.js', async () => {
+        gDracoDecoderModule = await DracoDecoderModule();
+        app.decoderModule = gDracoDecoderModule;
+        decodeGeometry(drcBunny1);
     });
     const elApp = document.getElementById('app');
     const elRc = elApp?.getBoundingClientRect();
@@ -162,6 +239,5 @@ window.onload = () => {
     app3.updateFrame();
     app3.setAxes(0.5, 2e-3, { textScaleFactor: 0.1 });
     console.log('onload', elApp)
-    loadModel(drcBunny);
-    // loadDracoModule();
+    loadModel(drcBunny0);
 }

@@ -28848,6 +28848,21 @@ class CommonLoader {
             uv: "Float32Array",
             VFlag: "Uint16Array"
           };
+        } else if (this.options.code == 2) {
+          this.loader.defaultAttributeIDs = {
+            position: "POSITION",
+            normal: "NORMAL",
+            color: "COLOR",
+            uv: "TEX_COORD",
+            flag: "GENERIC"
+          };
+          this.loader.defaultAttributeTypes = {
+            position: "Float32Array",
+            normal: "Float32Array",
+            color: "Float32Array",
+            uv: "Float32Array",
+            flag: "Uint8Array"
+          };
         }
         break;
       }
@@ -29333,7 +29348,8 @@ class DRACOExporter {
       quantization: [16, 8, 8, 8, 8],
       exportUvs: true,
       exportNormals: true,
-      exportColor: false
+      exportColor: false,
+      exportFlag: false
     }, options);
     if (DracoEncoderModule === void 0) {
       throw new Error("THREE.DRACOExporter: required the draco_encoder to work.");
@@ -29375,6 +29391,12 @@ class DRACOExporter {
         if (colors !== void 0) {
           const array = createVertexColorSRGBArray(colors);
           builder.AddFloatAttributeToMesh(dracoObject, dracoEncoder.COLOR, colors.count, colors.itemSize, array);
+        }
+      }
+      if (options.exportFlag === true) {
+        const flags = geometry.getAttribute("flag");
+        if (flags !== void 0) {
+          builder.AddFloatAttributeToMesh(dracoObject, dracoEncoder.GENERIC, flags.count, flags.itemSize, flags.array);
         }
       }
     } else if (object.isPoints === true) {
@@ -29473,14 +29495,15 @@ const mesh2stl = (mesh, { isBinary }) => {
     resolve(exporter.parse(mesh, { binary: isBinary }));
   });
 };
-const mesh2drc = (mesh) => {
+const mesh2drc = (mesh, options = {}) => {
   return new Promise((resolve) => {
     const exporter = new DRACOExporter();
     resolve(exporter.parse(mesh, {
       exportColor: false,
       exportUvs: false,
       exportNormals: false,
-      quantization: [14, 8, 8, 8, 8]
+      quantization: [14, 8, 8, 8, 8],
+      ...options
     }));
   });
 };

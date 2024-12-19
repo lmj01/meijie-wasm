@@ -9,6 +9,6 @@ if (Test-Path -Path $dracoBuildPath) {
 }
 cd builddraco
 cmake --preset release
-cmake -DDRACO_TRANSCODER_SUPPORTED=ON -DDRACO_JS_GLUE=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 $dracoSrcPath
+cmake --build --preset release -DDRACO_TRANSCODER_SUPPORTED=ON -DDRACO_JS_GLUE=ON -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 16 2019" -A x64 $dracoSrcPath
 MSBuild.exe draco.sln /t:Build /p:Configuration=Release
 cd ..
