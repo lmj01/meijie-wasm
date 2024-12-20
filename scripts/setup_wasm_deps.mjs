@@ -40,8 +40,9 @@ const libs = [
         url: 'https://github.com/emscripten-core/emsdk.git',
         tag: '3.1.65',
         dir: EMSDK_DIR,
-        action: [fixEmscripten],
-        command: `${EMSDK_DIR}/emsdk install latest && ${EMSDK_DIR}/emsdk activate --embedded latest && cd ${EMSDK_DIR}/upstream/emscripten && npm i`
+        // action: [fixEmscripten],
+        action: [],
+        command: `${EMSDK_DIR}/emsdk install latest && ${EMSDK_DIR}/emsdk activate latest && cd ${EMSDK_DIR}/upstream/emscripten && npm i`
     },
     {
         name: 'draco',

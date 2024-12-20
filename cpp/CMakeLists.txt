@@ -5,6 +5,10 @@ set (CMAKE_CXX_STANDARD 17)
 # set (TARGET draco-wasm)
 set (CMAKE_CONFIGURATION_TYPES Debug;Release)
 
+# on window11 python problem with gbk
+# set(ENV{PYTHONUTF8} 1)
+# set(ENV{PYTHONIOENCODING} "utf8")
+
 set(EMSCRIPTEN "${SOURCE_ROOT_DIR}/cpp/build/emsdk/upstream/emscripten")
 
 get_filename_component(SOURCE_ROOT_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)

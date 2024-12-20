@@ -5,6 +5,7 @@ import { loadJavaScriptFile, toLocalFile } from '../../tool/dom'
 import drcBunny0 from './assets/bunny.three.drc?url';
 // import drcBunny1 from './assets/bunny.npm.drc?url';
 import drcBunny1 from './assets/test.cplusplus.drc?url';
+// import drcBunny1 from './assets/car.drc?url';
 const app3 = new MqMultiViewEditor();
 let gDracoEncoderModule: any;
 let gDracoDecoderModule: any;
