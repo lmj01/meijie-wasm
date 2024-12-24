@@ -1,11 +1,12 @@
 import { MqMultiViewEditor, alias3, PathLoader, geometry2Mesh, mesh2drc, bindDracoEncoder } from './third/mq-render/viewer.es'
 import { loadJavaScriptFile, toLocalFile } from '../../tool/dom'
 // import DracoEncoderModule from './assets/draco/draco_encoder_gltf_nodejs';
-// import drcBunny0 from './assets/bunny.drc?url';
-import drcBunny0 from './assets/bunny.three.drc?url';
-// import drcBunny1 from './assets/bunny.npm.drc?url';
-import drcBunny1 from './assets/test.cplusplus.drc?url';
+import drcBunny0 from './assets/bunny.drc?url';
+// import drcBunny0 from './assets/bunny.three.drc?url';
+import drcBunny1 from './assets/bunny.npm.drc?url';
+// import drcBunny1 from './assets/test.cplusplus.drc?url';
 // import drcBunny1 from './assets/car.drc?url';
+import drcBunny2 from './assets/2.drc?url';
 const app3 = new MqMultiViewEditor();
 let gDracoEncoderModule: any;
 let gDracoDecoderModule: any;
@@ -108,7 +109,7 @@ async function decodeGeometry(path: string) {
 
 async function encodeGeometry(geo: any) {
     if (!gDracoEncoderModule) return;
-    console.log(gDracoEncoderModule)
+    // console.log(gDracoEncoderModule)
     const encoder = new gDracoEncoderModule.Encoder();
     const meshBuilder = new gDracoEncoderModule.MeshBuilder();
     // Create a mesh object for storing mesh data.
@@ -143,7 +144,8 @@ async function encodeGeometry(geo: any) {
         // console.log(srcAttribute)
         const total = srcAttribute.count * srcAttribute.itemSize;
         // console.log(attr)
-        const attributeDataArray = new Float32Array(total);
+
+        const attributeDataArray = ['flag'].includes(attr) ? new Uint8Array(total) : new Float32Array(total);
         for (let i = 0; i < total; ++i) {
             attributeDataArray[i] = srcAttribute.array.at(i);
         }
@@ -181,7 +183,7 @@ async function encodeGeometry(geo: any) {
 
     console.log(outputBuffer);
 
-    // toLocalFile(outputBuffer, `bunny.npm.drc`);
+    toLocalFile(outputBuffer, `bunny.npm.drc`);
 }
 
 window.onload = () => {
@@ -194,6 +196,7 @@ window.onload = () => {
     button1.addEventListener('click', async () => {
         const meshes = app3.findByName('bunny');
         if (meshes.length > 0) {
+            console.log('npm encode ', meshes[0].geometry)
             await encodeGeometry(meshes[0].geometry);
         }
     }, false);
@@ -209,7 +212,9 @@ window.onload = () => {
             const theMesh = meshes[0].clone();
             const geo = theMesh.geometry;
             const attrFlag = new Uint8Array(geo.attributes.position.count);
-            attrFlag.fill(1);
+            for (let i = 0; i < attrFlag.length; i++) {
+                attrFlag[i] = Math.random()*10;
+            }            
             geo.setAttribute('flag', new alias3.BufferAttribute(attrFlag, 1));
             const buffer = await mesh2drc(theMesh, {exportFlag: true});
             toLocalFile(buffer, `bunny.three.drc`);
@@ -225,6 +230,7 @@ window.onload = () => {
         gDracoDecoderModule = await DracoDecoderModule();
         app.decoderModule = gDracoDecoderModule;
         decodeGeometry(drcBunny1);
+        // decodeGeometry(drcBunny2);
     });
     const elApp = document.getElementById('app');
     const elRc = elApp?.getBoundingClientRect();
