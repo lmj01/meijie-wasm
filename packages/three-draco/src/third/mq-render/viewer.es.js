@@ -6230,6 +6230,11 @@ class BufferAttribute {
     return data;
   }
 }
+class Uint8BufferAttribute extends BufferAttribute {
+  constructor(array, itemSize, normalized) {
+    super(new Uint8Array(array), itemSize, normalized);
+  }
+}
 class Uint16BufferAttribute extends BufferAttribute {
   constructor(array, itemSize, normalized) {
     super(new Uint16Array(array), itemSize, normalized);
@@ -36401,6 +36406,7 @@ const alias3 = {
   OrthographicCamera,
   BufferAttribute,
   BufferGeometry,
+  Uint8BufferAttribute,
   Float32BufferAttribute,
   BoxGeometry,
   TubeGeometry,
@@ -37828,9 +37834,9 @@ function getMaterialByOptions(options = {}) {
       },
       vertexShader: rShaderCrown.vertexShader,
       fragmentShader: rShaderCrown.fragmentShader,
-      side: DoubleSide,
-      vertexColors: true,
-      transparent: false
+      side: DoubleSide
+      // vertexColors: true,
+      // transparent: false,            
     });
   } else {
     mat = new MeshPhongMaterial({
@@ -37865,7 +37871,6 @@ function rAppendGeometryDistance(geo) {
   const position = geo.attributes.position;
   const total = position.count / position.itemSize;
   const distances = new Float32Array(total).fill(1);
-  console.log(distances);
   geo.setAttribute("mqDistance", new BufferAttribute(distances, 1));
   if (!geo.attributes.normal) geo.computeVertexNormals();
   geo.normalizeNormals();
