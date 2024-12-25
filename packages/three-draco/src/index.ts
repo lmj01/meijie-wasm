@@ -10,7 +10,7 @@ import drcBunny2 from './assets/2.drc?url';
 const app3 = new MqMultiViewEditor();
 let gDracoEncoderModule: any;
 let gDracoDecoderModule: any;
-let app:any = {};
+let app: any = {};
 (<any>window).app = app;
 const viewState = [
     // single scene
@@ -26,7 +26,7 @@ const viewState = [
     },
 ];
 
-const attrTypes = { 
+const attrTypes = {
     POSITION: 0,
     NORMAL: 1,
     COLOR: 2,
@@ -34,7 +34,6 @@ const attrTypes = {
 }
 
 async function loadModel(path: string) {
-    console.log('load modle path ', path)
     const loader = new PathLoader(path, {
         drcPath: 'libs/draco/',
         code: 2,
@@ -43,7 +42,7 @@ async function loadModel(path: string) {
         const e = arguments[0];
         console.log(e);
     });
-    console.log('load model geometry', geo);
+    console.log(path, geo);
     const mesh = geometry2Mesh(geo);
     mesh.name = 'bunny';
     mesh.scale.multiplyScalar(100);
@@ -59,7 +58,7 @@ async function decodeGeometry(path: string) {
     decodeBuffer.Init(new Int8Array(buffer), buffer.byteLength);
     const geometryType = decoder.GetEncodedGeometryType(decodeBuffer);
     console.log(path, 'geometry type', geometryType)
-    let dracoGeometry:any;    
+    let dracoGeometry: any;
     let status;
     if (geometryType === gDracoDecoderModule.TRIANGULAR_MESH) {
         dracoGeometry = new gDracoDecoderModule.Mesh();
@@ -76,7 +75,7 @@ async function decodeGeometry(path: string) {
     // const idFlag = decoder.GetAttributeIdByName(dracoGeometry, 'flag');
     // console.log(path, idFlag);
 
-    Object.keys(attrTypes).forEach(attr=>{        
+    Object.keys(attrTypes).forEach(attr => {
         console.log(path, attr)
         const id = decoder.GetAttributeId(dracoGeometry, gDracoDecoderModule[attr])
         const attrs = decoder.GetAttribute(dracoGeometry, id);
@@ -84,7 +83,7 @@ async function decodeGeometry(path: string) {
         console.log(path, attr, id, attrs, attrs.size());
         console.log(attrs.attribute_type(), attrs.data_type(), attrs.byte_stride(), attrs.num_components(), attrs.byte_offset())
         // console.log(attrs.GetAttributeTransformData());
-        if (attr_type==4) {            
+        if (attr_type == 4) {
             const arrDraco = new gDracoDecoderModule.DracoUInt8Array();
             const arrJs = new Uint8Array(attrs.size());
             if (decoder.GetAttributeUInt8ForAllPoints(dracoGeometry, attrs, arrDraco)) {
@@ -94,7 +93,6 @@ async function decodeGeometry(path: string) {
                 console.log(arrJs);
             }
         } else {
-            console.log(attr_type)
             let arrDraco = new gDracoDecoderModule.DracoFloat32Array();
             let arrJs = new Float32Array(attrs.size());
             if (decoder.GetAttributeFloatForAllPoints(dracoGeometry, attrs, arrDraco)) {
@@ -144,14 +142,20 @@ async function encodeGeometry(geo: any) {
         // console.log(srcAttribute)
         const total = srcAttribute.count * srcAttribute.itemSize;
         // console.log(attr)
-
-        const attributeDataArray = ['flag'].includes(attr) ? new Uint8Array(total) : new Float32Array(total);
+        const isByte = ['flag'].includes(attr);
+        const attributeDataArray = isByte ? new Uint8Array(total) : new Float32Array(total);
         for (let i = 0; i < total; ++i) {
             attributeDataArray[i] = srcAttribute.array.at(i);
         }
         // console.log(attrType, attr, attributeDataArray, srcAttribute)
-        meshBuilder.AddFloatAttributeToMesh(newMesh, attrType, srcAttribute.count,
-            srcAttribute.itemSize, attributeDataArray);
+        if (isByte) {
+            meshBuilder.AddInt8Attribute(newMesh, attrType, srcAttribute.count,
+                srcAttribute.itemSize, attributeDataArray);
+        } else {
+            // 之前的统一接口是这样返回的
+            meshBuilder.AddFloatAttribute(newMesh, attrType, srcAttribute.count,
+                srcAttribute.itemSize, attributeDataArray);
+        }
     });
 
     let encodedData = new gDracoEncoderModule.DracoInt8Array();
@@ -211,12 +215,15 @@ window.onload = () => {
         if (meshes.length > 0) {
             const theMesh = meshes[0].clone();
             const geo = theMesh.geometry;
+            // const attrFlag = [];
             const attrFlag = new Uint8Array(geo.attributes.position.count);
             for (let i = 0; i < attrFlag.length; i++) {
-                attrFlag[i] = Math.random()*10;
-            }            
-            geo.setAttribute('flag', new alias3.BufferAttribute(attrFlag, 1));
-            const buffer = await mesh2drc(theMesh, {exportFlag: true});
+                attrFlag[i] = Math.random() * 10;
+                // attrFlag.push(Math.random()*10);
+            }
+            geo.setAttribute('flag', new alias3.Uint8BufferAttribute(attrFlag, 1));
+            console.log('add flag attribute', geo)
+            const buffer = await mesh2drc(theMesh, { exportFlag: true });
             toLocalFile(buffer, `bunny.three.drc`);
         }
     }, false);
