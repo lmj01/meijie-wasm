@@ -5,12 +5,16 @@ import { execAsync } from './common.mjs';
 
 const CPP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../cpp/')
 const BUILD_DIR = path.resolve(CPP_ROOT, 'build');
+const DEFORMATION_DIR = path.resolve(CPP_ROOT, 'deformation/third_party');
 
 const EMSDK_DIR_NAME = 'emsdk';
 const EMSDK_DIR = path.resolve(BUILD_DIR, EMSDK_DIR_NAME);
 
 const DRACO_DIR_NAME = 'draco';
 const DRACO_DIR = path.resolve(BUILD_DIR, DRACO_DIR_NAME);
+
+const EIGEN_DIR_NAME = 'eigen';
+const EIGEN_DIR = path.resolve(DEFORMATION_DIR, EIGEN_DIR_NAME);
 
 /**
  * Due to a WebXR error, we need to use --skipLibCheck
@@ -53,6 +57,14 @@ const libs = [
         dir: DRACO_DIR,
         action: [updateSubmoduleDraco],
         command: undefined
+    },
+    {
+        name: 'eigen',
+        url: 'https://gitlab.com/libeigen/eigen.git',
+        tag: '3.4.0',
+        dir: EIGEN_DIR,
+        action: [],
+        command: undefined
     }
 ]
 
@@ -82,6 +94,9 @@ async function setupLibs() {
 function main() {
     if (!fs.existsSync(BUILD_DIR)) {
         fs.mkdirSync(BUILD_DIR);
+    }
+    if (!fs.existsSync(DEFORMATION_DIR)) {
+        fs.mkdirSync(DEFORMATION_DIR);
     }
 
     setupLibs()
