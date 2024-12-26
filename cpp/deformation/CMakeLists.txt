@@ -1,10 +1,10 @@
 cmake_minimum_required (VERSION 3.22)
 
-project (draco-wasm)
+project (deformation-wasm)
 set (CMAKE_CXX_STANDARD 17)
 # 设置 C 和 C++ 编译器为 emcc 和 em++
-set(CMAKE_C_COMPILER emcc)
-set(CMAKE_CXX_COMPILER em++)
+#set(CMAKE_C_COMPILER emcc)
+#set(CMAKE_CXX_COMPILER em++)
 # set (TARGET draco-wasm)
 set (CMAKE_CONFIGURATION_TYPES Debug;Release)
 
@@ -12,7 +12,7 @@ set (CMAKE_CONFIGURATION_TYPES Debug;Release)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s WASM=1 -O3 --bind")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s WASM=1 -O3 --bind")
 
-get_filename_component(SOURCE_ROOT_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
+get_filename_component(SOURCE_ROOT_DIR "${CMAKE_SOURCE_DIR}/deformation" DIRECTORY)
 
 set(eigen_path "${SOURCE_ROOT_DIR}/third_party/eigen")
 set(eigen_include_path "${eigen_path}/Eigen")
@@ -25,7 +25,7 @@ set(SOURCE_FILES
     laplacian_deformation.cpp
 )
 
-add_subdirectory(${eigen_include_path})
+add_subdirectory(${eigen_path})
 
 if (${EMSCRIPTEN})
     
