@@ -16,6 +16,7 @@ get_filename_component(SOURCE_ROOT_DIR "${CMAKE_SOURCE_DIR}/deformation" DIRECTO
 
 set(eigen_path "${SOURCE_ROOT_DIR}/third_party/eigen")
 set(eigen_include_path "${eigen_path}/Eigen")
+option(EIGEN_SPLIT_LARGE_TESTS "eigen test" OFF)
 
 message(WARNING "${SOURCE_ROOT_DIR}")
 
