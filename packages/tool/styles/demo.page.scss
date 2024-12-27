@@ -1,0 +1,21 @@
+[data-bs-theme="blue"] {
+    --bs-body-color: var(--bs-white);
+}
+@import './bootstrap.scss';
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Arial", "Microsoft YaHei", "黑体", "宋体", sans-serif;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    #app {
+        width: 100%;
+        height: 100%;
+    }
+}

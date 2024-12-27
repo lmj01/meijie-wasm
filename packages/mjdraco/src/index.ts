@@ -6,8 +6,8 @@ import drcBunny0 from './assets/bunny.drc?url';
 import drcBunny1 from './assets/bunny.npm.drc?url';
 // import drcBunny1 from './assets/test.cplusplus.drc?url';
 // import drcBunny1 from './assets/car.drc?url';
-import drcBunny2 from './assets/2.drc?url';
 const app3 = new MqMultiViewEditor();
+let useDracoFrom = 1; // 1 meijie 2 npm
 let gDracoEncoderModule: any;
 let gDracoDecoderModule: any;
 let app: any = {};
@@ -229,16 +229,19 @@ window.onload = () => {
     }, false);
     document.body.appendChild(button2);
 
-    loadJavaScriptFile('libs/npm/draco_encoder_gltf_nodejs.js', async () => {
-        gDracoEncoderModule = await DracoEncoderModule();
-        app.encoderModule = gDracoEncoderModule;
-    });
-    loadJavaScriptFile('libs/npm/draco_decoder_gltf_nodejs.js', async () => {
-        gDracoDecoderModule = await DracoDecoderModule();
-        app.decoderModule = gDracoDecoderModule;
-        decodeGeometry(drcBunny1);
-        // decodeGeometry(drcBunny2);
-    });
+    if ([1,2].includes(useDracoFrom)) {
+        loadJavaScriptFile(`libs/${useDracoFrom==2?'npm/draco_encoder_gltf_nodejs.js':'meijie/draco_encoder.js'}`, async () => {
+            gDracoEncoderModule = await DracoEncoderModule();
+            console.log('draco_encoder', gDracoEncoderModule)
+            app.encoderModule = gDracoEncoderModule;
+        });
+        loadJavaScriptFile(`libs/${useDracoFrom==2?'npm/draco_decoder_gltf_nodejs.js':'meijie/draco_decoder.js'}`, async () => {
+            gDracoDecoderModule = await DracoDecoderModule();
+            console.log('draco_decoder', gDracoDecoderModule)
+            app.decoderModule = gDracoDecoderModule;
+            decodeGeometry(drcBunny1);
+        });
+    }
     const elApp = document.getElementById('app');
     const elRc = elApp?.getBoundingClientRect();
     app3.init({

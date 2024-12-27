@@ -36448,7 +36448,8 @@ const alias3 = {
 };
 const aliasBvh = {
   computeBoundsTree,
-  MeshBVH
+  MeshBVH,
+  ExtendedTriangle
 };
 var extendStatics = function(d, b) {
   extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
