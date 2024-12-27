@@ -30,13 +30,20 @@ async function init() {
     const loader = new PathLoader(mq45, { drcPath: 'libs/draco/' })
     console.log(mq45)
     const paths = [mq45, mq46, mqUpper, mqLower];
+    const names = ['45', '46', 'upper', 'lower'];
     for (let i = 0; i < paths.length; i++) {
         const path = paths[i];
         let buffer = await loader.load(path);
         let mesh = await rBufferToModel({buffer}, {color});
+        mesh.name = names[i];
+        if (mesh.geometry.computeBoundsTree) mesh.geometry.computeBoundsTree();        
         app3.add(mesh);
     }
-    console.log(app)
+    const m45 = app3.findByName('45')[0], mupper = app3.findByName('upper');
+
+    const transformMatrix = new alias3.Matrix4().copy( m45.matrixWorld ).invert();
+    const hit = m45.geometry.boundsTree.intersectsGeometry( m45.geometry, transformMatrix );
+    console.log(hit)
 }
 window.onload = () => {
     bindDracoEncoder(`libs/draco/draco_encoder.js`);
