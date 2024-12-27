@@ -5,7 +5,9 @@ cpp/bdeformation
 cpp/deformation/third_party
 cpp/bunny.*
 
-packages/three-draco/index.css
-packages/three-draco/index.css.map
+packages/mjdraco/index.css
+packages/mjdraco/index.css.map
+packages/mjdraco/src/assets/*.drc
+
 
 *.swp

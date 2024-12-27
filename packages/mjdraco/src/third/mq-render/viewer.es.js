@@ -6230,11 +6230,6 @@ class BufferAttribute {
     return data;
   }
 }
-class Uint8BufferAttribute extends BufferAttribute {
-  constructor(array, itemSize, normalized) {
-    super(new Uint8Array(array), itemSize, normalized);
-  }
-}
 class Uint16BufferAttribute extends BufferAttribute {
   constructor(array, itemSize, normalized) {
     super(new Uint16Array(array), itemSize, normalized);
@@ -31090,7 +31085,6 @@ class StrCell {
     ctx.font = options.fontInfo || "100 72px sans-serif";
     const textMetrics = ctx.measureText(text);
     if (options.noFix) {
-      console.log(textMetrics.width, CellSize, x, y);
       ctx.fillText(str, x + (CellSize - textMetrics.width) / 2, y + CellSize / 2);
     } else {
       ctx.fillText(str, x + CellSize / 2, y + CellSize / 2);
@@ -35509,6 +35503,12 @@ function toMeshWithMaterialReplace(geometry, eType, userData = {}) {
   if (material) return new Mesh(geometry, material);
 }
 new Color().setRGB(0.5, 0.5, 0.5);
+const ColorMapKeywords = {
+  "rainbow": [[0, 255], [0.2, 65535], [0.5, 65280], [0.8, 16776960], [1, 16711680]],
+  "cooltowarm": [[0, 3952322], [0.2, 10206463], [0.5, 14474460], [0.8, 16163717], [1, 11797542]],
+  "blackbody": [[0, 0], [0.2, 7864320], [0.5, 15086080], [0.8, 16776960], [1, 16777215]],
+  "grayscale": [[0, 0], [0.2, 4210752], [0.5, 8355712], [0.8, 12566463], [1, 16777215]]
+};
 class Lut {
   constructor(colormap, count = 32) {
     this.isLut = true;
@@ -35571,20 +35571,25 @@ class Lut {
     const colorPosition = Math.round(alpha * this.n);
     return this.lut[colorPosition];
   }
+  getValue(alpha) {
+    alpha = MathUtils.clamp(alpha, this.minV, this.maxV);
+    const index = (alpha - this.minV) / (this.maxV - this.minV);
+    return index;
+  }
   addColorMap(name, arrayOfColors) {
     ColorMapKeywords[name] = arrayOfColors;
     return this;
   }
-  createCanvas() {
+  createCanvas(width = 1) {
     const canvas = document.createElement("canvas");
-    canvas.width = 1;
+    canvas.width = width;
     canvas.height = this.n;
     this.updateCanvas(canvas);
     return canvas;
   }
   updateCanvas(canvas) {
     const ctx = canvas.getContext("2d", { alpha: false });
-    const imageData = ctx.getImageData(0, 0, 1, this.n);
+    const imageData = ctx.getImageData(0, 0, canvas.width, this.n);
     const data = imageData.data;
     let k = 0;
     const step = 1 / this.n;
@@ -35603,7 +35608,20 @@ class Lut {
           data[k * 4 + 1] = Math.round(finalColor.g * 255);
           data[k * 4 + 2] = Math.round(finalColor.b * 255);
           data[k * 4 + 3] = 255;
-          k += 1;
+          k += canvas.width;
+        }
+      }
+    }
+    if (canvas.width > 1) {
+      const LayerOffset = canvas.width * 4;
+      for (let h = 1; h < canvas.width; h++) {
+        for (let v = 0; v < this.n; v++) {
+          let begin = v * LayerOffset;
+          let index = begin + h * 4;
+          data[index + 0] = data[begin + 0];
+          data[index + 1] = data[begin + 1];
+          data[index + 2] = data[begin + 2];
+          data[index + 3] = data[begin + 3];
         }
       }
     }
@@ -35611,12 +35629,6 @@ class Lut {
     return canvas;
   }
 }
-const ColorMapKeywords = {
-  "rainbow": [[0, 255], [0.2, 65535], [0.5, 65280], [0.8, 16776960], [1, 16711680]],
-  "cooltowarm": [[0, 3952322], [0.2, 10206463], [0.5, 14474460], [0.8, 16163717], [1, 11797542]],
-  "blackbody": [[0, 0], [0.2, 7864320], [0.5, 15086080], [0.8, 16776960], [1, 16777215]],
-  "grayscale": [[0, 0], [0.2, 4210752], [0.5, 8355712], [0.8, 12566463], [1, 16777215]]
-};
 function computeMikkTSpaceTangents(geometry, MikkTSpace, negateSign = true) {
   if (!MikkTSpace || !MikkTSpace.isReady) {
     throw new Error("BufferGeometryUtils: Initialized MikkTSpace library required.");
@@ -36406,7 +36418,6 @@ const alias3 = {
   OrthographicCamera,
   BufferAttribute,
   BufferGeometry,
-  Uint8BufferAttribute,
   Float32BufferAttribute,
   BoxGeometry,
   TubeGeometry,
@@ -37741,7 +37752,6 @@ const rShaderCrown = {
     varying vec3 vViewPosition;
     varying float vDistance;
     varying vec3 vFixedMapcolor;
-    const float mapFactor = 2.0 / 3.0;
     void main() {
         vec3 normal = normalize(vNormal);
         vec3 viewDir = normalize(vViewPosition);
@@ -37759,15 +37769,12 @@ const rShaderCrown = {
         vec4 targetColor;
 
         if(useMapColor) {  
-            // [-1.5,0] to [0, 1] is y = 2/3x + 1
-            if (vDistance >= -1.5 && vDistance <= 0.0) {
-                float y = mapFactor * vDistance + 1.0;
-                // targetColor = texture2D(textureMap, vec2(y, 0));
-                // targetColor = vec4(y, 0, 0, 1.0);
-                targetColor = vec4(0.0, 0.0, 1.0, 1.0);
+            if (vDistance < 1.0 && vDistance > 0.0) {
+                targetColor = texture2D(textureMap, vec2(0, vDistance));
+                // targetColor = vec4(0.0, 0.0, 1.0, 1.0);
             } else {
-                // targetColor = vec4(color.r, color.g, color.b, 1.0);
-                targetColor = vec4(1.0, 1.0, 0.0, 1.0);
+                targetColor = vec4(color.r, color.g, color.b, 1.0);
+                // targetColor = vec4(1.0, 1.0, 0.0, 1.0);
             }
         } else {
             targetColor = vec4(color.r, color.g, color.b, 1.0);
@@ -37834,9 +37841,10 @@ function getMaterialByOptions(options = {}) {
       },
       vertexShader: rShaderCrown.vertexShader,
       fragmentShader: rShaderCrown.fragmentShader,
-      side: DoubleSide
+      side: DoubleSide,
       // vertexColors: true,
-      // transparent: false,            
+      transparent: false,
+      shadowSide: DoubleSide
     });
   } else {
     mat = new MeshPhongMaterial({
@@ -37855,22 +37863,21 @@ function getMaterialByOptions(options = {}) {
   return mat;
 }
 function rAppendGeometryColor(geo, color) {
-  const colors = [];
-  for (let i = 0; i < geo.attributes.position.count; i++) {
-    colors.push(color.r);
-    colors.push(color.g);
-    colors.push(color.b);
+  const position = geo.attributes.position;
+  const total = position.array.length;
+  const colors = new Float32Array(total);
+  for (let i = 0; i < total; i += 3) {
     setXYZ(colors, i, color.r, color.g, color.b);
   }
-  geo.setAttribute("color", new Float32BufferAttribute(colors, 3));
+  geo.setAttribute("color", new BufferAttribute(colors, 3));
   if (!geo.attributes.normal) geo.computeVertexNormals();
   geo.normalizeNormals();
   geo.attributes.color.needsUpdate = true;
 }
 function rAppendGeometryDistance(geo) {
   const position = geo.attributes.position;
-  const total = position.count / position.itemSize;
-  const distances = new Float32Array(total).fill(1);
+  const total = position.count / 1;
+  const distances = new Float32Array(total).fill(2);
   geo.setAttribute("mqDistance", new BufferAttribute(distances, 1));
   if (!geo.attributes.normal) geo.computeVertexNormals();
   geo.normalizeNormals();

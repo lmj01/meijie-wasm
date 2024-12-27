@@ -221,7 +221,7 @@ window.onload = () => {
                 attrFlag[i] = Math.random() * 10;
                 // attrFlag.push(Math.random()*10);
             }
-            geo.setAttribute('flag', new alias3.Uint8BufferAttribute(attrFlag, 1));
+            geo.setAttribute('flag', new alias3.BufferAttribute(attrFlag, 1));
             console.log('add flag attribute', geo)
             const buffer = await mesh2drc(theMesh, { exportFlag: true });
             toLocalFile(buffer, `bunny.three.drc`);
@@ -229,11 +229,11 @@ window.onload = () => {
     }, false);
     document.body.appendChild(button2);
 
-    loadJavaScriptFile('libs/draco/npm/draco_encoder_gltf_nodejs.js', async () => {
+    loadJavaScriptFile('libs/npm/draco_encoder_gltf_nodejs.js', async () => {
         gDracoEncoderModule = await DracoEncoderModule();
         app.encoderModule = gDracoEncoderModule;
     });
-    loadJavaScriptFile('libs/draco/npm/draco_decoder_gltf_nodejs.js', async () => {
+    loadJavaScriptFile('libs/npm/draco_decoder_gltf_nodejs.js', async () => {
         gDracoDecoderModule = await DracoDecoderModule();
         app.decoderModule = gDracoDecoderModule;
         decodeGeometry(drcBunny1);

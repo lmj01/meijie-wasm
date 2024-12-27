@@ -1,7 +1,7 @@
 import { copyFiles, existFile } from '../tool/file.mjs'
 
 const srcFolder1 = '../../cpp/build/draco/javascript/npm/draco3dgltf';
-const dstFolder1 = './public/libs/draco/npm';
+const dstFolder1 = './public/libs/npm';
 
 const files = [
     'draco_encoder_gltf_nodejs.js', 
