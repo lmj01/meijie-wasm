@@ -3,6 +3,7 @@ import path from 'path'
 
 const rollupOptionsInput = {
     target: path.resolve(__dirname, 'index.html'),    
+    bvh: path.resolve(__dirname, 'bvh.html'),    
 }
   
 export default defineConfig({
