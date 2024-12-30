@@ -31250,7 +31250,7 @@ class MqMultiViewEditor extends MqRender {
     const sizeScale = 80;
     (_a = options.viewStateList) == null ? void 0 : _a.forEach((view, index) => {
       if (view.label) {
-        view.strSprite = new StrSprite(view.label);
+        view.strSprite = new StrSprite(view.label, options);
         view.strSprite.target.center.set(0.5, 0.5);
         view.strSprite.target.scale.set(sizeScale, sizeScale, 1);
         view.strSprite.target.position.set(0, -options.height * 0.45, 0);
