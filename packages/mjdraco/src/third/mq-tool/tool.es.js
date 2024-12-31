@@ -14,25 +14,22 @@ class MqRaycast {
 }
 const cache = {
   sphere: [],
-  radius: []
+  radius: [],
+  mat: void 0
 };
 function createMarkSphere(lib3, options = {}) {
   let geo, radius = options.sphereRadius || 0.75;
-  if (options.useCache) {
-    let idx = cache.radius.indexOf(radius);
-    if (idx < 0) {
-      geo = new lib3.SphereGeometry(radius, 32, 32);
-      cache.sphere.push(geo);
-      cache.radius.push(radius);
-    } else {
-      geo = cache.sphere[idx];
-    }
-    if (!geo) throw new Error(`cache with some wrong ${idx}`);
-  } else {
+  let idx = cache.radius.indexOf(radius);
+  if (idx < 0) {
     geo = new lib3.SphereGeometry(radius, 32, 32);
+    cache.sphere.push(geo);
+    cache.radius.push(radius);
+  } else {
+    geo = cache.sphere[idx];
   }
-  const mat = new lib3.MeshLambertMaterial({ color: 16711680 });
-  const mark = new lib3.Mesh(geo, mat);
+  if (!geo) throw new Error(`cache with some wrong ${idx}`);
+  if (!cache.mat) cache.mat = new lib3.MeshLambertMaterial({ color: 16711680 });
+  const mark = new lib3.Mesh(geo, cache.mat);
   mark.name = options.name || `mark_sphere_${Date.now()}`;
   if (options.point) {
     if (options.point.isVector3) {

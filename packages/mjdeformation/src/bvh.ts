@@ -30,6 +30,33 @@ const viewState = [
     },
 ];
 async function init() {
+    // 
+    const options = {
+        // xCenter: -0.9,
+        // yCenter: 0.4,
+        xScale: 10,
+        yScale: Math.floor(app3.rc.height / 2),
+        xPos: -Math.floor(app3.rc.width / 2 * 0.95),
+    } || {}
+    const lut = new alias3.Lut()
+    lut.addColorMap('colorbar', [
+        [0.0, 0x0000ff], 
+        [0.5, 0x00FF00],
+        [1, 0xFF0000], 
+    ]);
+    lut.setColorMap('colorbar', 42);
+    lut.setMin(-1.5);
+	lut.setMax(0);
+    const sprite = new alias3.Sprite( new alias3.SpriteMaterial( {
+        map: new alias3.CanvasTexture( lut.createCanvas(20) )
+    } ) );
+    sprite.center.set(options.xCenter || 0.5, options.yCenter || 0.5);
+    sprite.position.set(options.xPos || 0.5, options.yPos || 0, options.zPos || 0);
+    sprite.scale.set(options.xScale || 0.5, options.yScale || 1, options.zScale || 1);
+    sprite.name = `ui_overlap`;
+    sprite.visible = true;    
+    app3.addUi(sprite);
+
     const color = new alias3.Color().setStyle('#B1A298');
     const loader = new PathLoader(drc45, { drcPath: 'libs/draco/' })
     const paths = [drc45, drc46, drcUpper, drcLower];
@@ -44,13 +71,15 @@ async function init() {
         app3.add(mesh);
         app.meshes.push(mesh);
     }
+
+    
     const mSrc = app3.findByName('45')[0], mDst = app3.findByName('upper')[0];
     mSrc.visible = true;
-    mDst.visible = true;
+    mDst.visible = false;
     const bvhSrc = mSrc.geometry.computeBoundsTree();
     const bvhDst = mDst.geometry.computeBoundsTree();
     console.log(mSrc, mDst, bvhSrc, bvhDst)
-    const hitColor = new alias3.Color().setStyle('#ff0000');
+    // const hitColor = new alias3.Color().setStyle('#ff0000');
     app.markList.slice();
     const transformMatrix = new alias3.Matrix4().copy(mSrc.matrixWorld).invert();
     const hit = mDst.geometry.boundsTree.intersectsGeometry(mSrc.geometry, transformMatrix);
@@ -64,8 +93,10 @@ async function init() {
         overlapSrc.setFromObject(mSrc);
         overlapDst.setFromObject(mDst);
         overlapSrc = overlapSrc.intersect(overlapDst);
-        console.log(overlapSrc)
-
+        let bboxSize = new alias3.Vector3();
+        overlapSrc.getSize(bboxSize);
+        console.log(overlapSrc, bboxSize)
+        
         let vPos = new alias3.Vector3();
         let closest: any = {}, info;
         let t1 = Date.now();
@@ -79,17 +110,21 @@ async function init() {
                     info = aliasBvh.getTriangleHitPointInfo(closest.point, mSrc.geometry, closest.faceIndex, info);
                     let inside = info.face.normal.dot(vPos.sub(closest.point)) > 0;
                     if (inside) {
-                        const mark = createMarkSphere(alias3, {point: closest.point, sphereRadius: 0.01, useCache: true});
-                        app.markList.push(mark);
-                        app3.add(mark);
+                        // const mark = createMarkSphere(alias3, {point: closest.point, sphereRadius: 0.01});
+                        // app.markList.push(mark);
+                        // app3.add(mark);
                     }
-                    console.log(info, inside, closest);
+                    // console.log(info, inside, closest);
                     // mSrc.geometry.index
-                    // mSrc.geometry.attributes.color.setXYZ(closest.faceIndex, hitColor.r, hitColor.g, hitColor.b);
+                    // console.log(closest.distance);
+                    const hitColor = lut.getColor(closest.distance - bboxSize.z/2);
+                    mSrc.geometry.attributes.color.setXYZ(info.face.a, hitColor.r, hitColor.g, hitColor.b);
+                    mSrc.geometry.attributes.color.setXYZ(info.face.b, hitColor.r, hitColor.g, hitColor.b);
+                    mSrc.geometry.attributes.color.setXYZ(info.face.c, hitColor.r, hitColor.g, hitColor.b);
                 }
             }
         }
-        // mSrc.geometry.attributes.color.needsUpdate = true;
+        mSrc.geometry.attributes.color.needsUpdate = true;
         let t2 = Date.now();
         console.log(t2-t1, t1, t2);
     }
