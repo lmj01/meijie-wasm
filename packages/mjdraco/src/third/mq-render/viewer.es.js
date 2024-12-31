@@ -33848,6 +33848,65 @@ function setTriangle(tri, i, index, pos) {
   tc.y = pos.getY(i2);
   tc.z = pos.getZ(i2);
 }
+const tempV1 = /* @__PURE__ */ new Vector3();
+const tempV2 = /* @__PURE__ */ new Vector3();
+const tempV3 = /* @__PURE__ */ new Vector3();
+const tempUV1 = /* @__PURE__ */ new Vector2();
+const tempUV2 = /* @__PURE__ */ new Vector2();
+const tempUV3 = /* @__PURE__ */ new Vector2();
+function getTriangleHitPointInfo(point, geometry, triangleIndex, target) {
+  const indices = geometry.getIndex().array;
+  const positions = geometry.getAttribute("position");
+  const uvs = geometry.getAttribute("uv");
+  const a = indices[triangleIndex * 3];
+  const b = indices[triangleIndex * 3 + 1];
+  const c = indices[triangleIndex * 3 + 2];
+  tempV1.fromBufferAttribute(positions, a);
+  tempV2.fromBufferAttribute(positions, b);
+  tempV3.fromBufferAttribute(positions, c);
+  let materialIndex = 0;
+  const groups = geometry.groups;
+  const firstVertexIndex = triangleIndex * 3;
+  for (let i = 0, l2 = groups.length; i < l2; i++) {
+    const group = groups[i];
+    const { start, count } = group;
+    if (firstVertexIndex >= start && firstVertexIndex < start + count) {
+      materialIndex = group.materialIndex;
+      break;
+    }
+  }
+  let uv = null;
+  if (uvs) {
+    tempUV1.fromBufferAttribute(uvs, a);
+    tempUV2.fromBufferAttribute(uvs, b);
+    tempUV3.fromBufferAttribute(uvs, c);
+    if (target && target.uv) uv = target.uv;
+    else uv = new Vector2();
+    Triangle.getInterpolation(point, tempV1, tempV2, tempV3, tempUV1, tempUV2, tempUV3, uv);
+  }
+  if (target) {
+    if (!target.face) target.face = {};
+    target.face.a = a;
+    target.face.b = b;
+    target.face.c = c;
+    target.face.materialIndex = materialIndex;
+    if (!target.face.normal) target.face.normal = new Vector3();
+    Triangle.getNormal(tempV1, tempV2, tempV3, target.face.normal);
+    if (uv) target.uv = uv;
+    return target;
+  } else {
+    return {
+      face: {
+        a,
+        b,
+        c,
+        materialIndex,
+        normal: Triangle.getNormal(tempV1, tempV2, tempV3, new Vector3())
+      },
+      uv
+    };
+  }
+}
 function intersectTris(bvh, side, ray2, offset, count, intersections, near, far) {
   const { geometry, _indirectBuffer } = bvh;
   for (let i = offset, end = offset + count; i < end; i++) {
@@ -36449,7 +36508,8 @@ const alias3 = {
 const aliasBvh = {
   computeBoundsTree,
   MeshBVH,
-  ExtendedTriangle
+  ExtendedTriangle,
+  getTriangleHitPointInfo
 };
 var extendStatics = function(d, b) {
   extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
