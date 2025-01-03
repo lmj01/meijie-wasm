@@ -1,17 +1,25 @@
 import { defineConfig } from 'vite'
+import wasm from 'vite-plugin-wasm'
 import path from 'path'
 
 const rollupOptionsInput = {
     index: path.resolve(__dirname, 'index.html'),    
-    bvh: path.resolve(__dirname, 'bvh.html'),    
-    triangle: path.resolve(__dirname, 'triangle.html'),    
 }
   
 export default defineConfig({
     optimizeDeps: {
-        // exclude: [/worker/g],
+        exclude: [
+            // /worker/g
+        ],
     },
-    plugins: [],
+    plugins: [
+        wasm(),
+    ],
+    worker: {
+        plugins: [
+            wasm(),
+        ],
+    },
     resolve: {
         alias: [
             {
@@ -25,7 +33,7 @@ export default defineConfig({
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'require-corp',
         },
-        port: 7110,
+        port: 7120,
     },
     build: {
         minify: false,

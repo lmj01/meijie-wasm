@@ -1,7 +1,8 @@
 {
-  "name": "mjdeformation",
+  "name": "mjbit2",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build"
@@ -10,6 +11,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "earcut": "^3.0.1"
+    "@bitbybit-dev/threejs": "^0.19.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.171.0"
   }
 }
