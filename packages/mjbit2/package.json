@@ -2,7 +2,6 @@
   "name": "mjbit2",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build"
@@ -15,5 +14,17 @@
   },
   "devDependencies": {
     "@types/three": "^0.171.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

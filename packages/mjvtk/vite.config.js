@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite'
-// import wasm from 'vite-plugin-wasm' 
 import path from 'path'
 
 const rollupOptionsInput = {
@@ -15,11 +14,6 @@ export default defineConfig({
     plugins: [
         // wasm(),
     ],
-    worker: {
-        plugins: [
-            // wasm(),
-        ],
-    },
     resolve: {
         alias: [
             {
@@ -33,7 +27,7 @@ export default defineConfig({
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'require-corp',
         },
-        port: 7120,
+        port: 7130,
     },
     build: {
         minify: false,

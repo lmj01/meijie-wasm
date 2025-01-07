@@ -1,0 +1,15 @@
+{
+  "name": "mjvtk",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@kitware/vtk.js": "^32.9.0"
+  }
+}
