@@ -31,7 +31,7 @@ const viewState = [
 ];
 async function init() {
     // 
-    const options = {
+    const options:any = {
         // xCenter: -0.9,
         // yCenter: 0.4,
         xScale: 10,

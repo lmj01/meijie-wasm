@@ -77,14 +77,14 @@ fullScreenRenderer.addController(controlPanel);
 const representationSelector = document.querySelector('.representations');
 const resolutionChange = document.querySelector('.resolution');
 
-representationSelector.addEventListener('change', (e) => {
-    const newRepValue = Number(e.target.value);
+representationSelector?.addEventListener('change', (e) => {
+    const newRepValue = Number(e.target?.value);
     actor.getProperty().setRepresentation(newRepValue);
     renderWindow.render();
 });
 
-resolutionChange.addEventListener('input', (e) => {
-    const resolution = Number(e.target.value);
+resolutionChange?.addEventListener('input', (e) => {
+    const resolution = Number(e.target?.value);
     coneSource.setResolution(resolution);
     renderWindow.render();
 });

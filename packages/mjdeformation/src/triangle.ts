@@ -1,8 +1,9 @@
 import {
-    alias3, MqMultiViewEditor, aliasBvh, PathLoader, bindDracoEncoder,
+    alias3, MqMultiViewEditor, PathLoader, bindDracoEncoder,
     rBufferToModel,
 } from 'mjdraco/src/third/mq-render/viewer.es'
 import earcut from 'earcut';
+import drc45 from './assets/45.drc?url';
 
 const app3 = new MqMultiViewEditor();
 let app: any = {
@@ -25,7 +26,12 @@ const viewState = [
     },
 ];
 async function init() {
-
+    const color = new alias3.Color().setStyle('#B1A298');
+    const loader = new PathLoader(drc45, { drcPath: 'libs/draco/' })
+    let geometry = await loader.load(drc45);
+    let mesh = await rBufferToModel({ buffer :geometry }, { color });
+    mesh.visible = true;
+    app3.add(mesh);
 }
 window.onload = () => {
     bindDracoEncoder(`libs/draco/draco_encoder.js`);
