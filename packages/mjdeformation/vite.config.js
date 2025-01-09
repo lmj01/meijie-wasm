@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import path from 'path'
+import emscriptenStaticWorkerOptions from './vite-fixup-plugin.js'
 
 const rollupOptionsInput = {
     index: path.resolve(__dirname, 'index.html'),    
@@ -20,6 +21,8 @@ export default defineConfig({
             }
         ],
     },
+    test: {testTimeout: 15000},
+    worker: {format: 'es', plugins: [emscriptenStaticWorkerOptions]},
     server: {
         headers: {
         'Cross-Origin-Opener-Policy': 'same-origin',
@@ -28,9 +31,15 @@ export default defineConfig({
         port: 7110,
     },
     build: {
+        target: 'esnext',
         minify: false,
         rollupOptions: {
             input: rollupOptionsInput,
+            output: {
+                entryFileNames: `assets/[name].js`,
+                chunkFileNames: `assets/[name].js`,
+                assetFileNames: `assets/[name].[ext]`
+            }
         },
     }
 })

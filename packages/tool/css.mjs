@@ -18,5 +18,4 @@ const retainType = process.env.npm_lifecycle_event
 console.log('-css build command-', retainType);
 parseFile('./styles/demo.three.scss', `../mjdraco/index.css`, {hasMap: true, compress:true});
 parseFile('./styles/demo.three.scss', `../mjdeformation/index.css`, {hasMap: true, compress:true});
-parseFile('./styles/demo.three.scss', `../mjbit2/index.css`, {hasMap: true, compress:true});
 parseFile('./styles/demo.page.scss', `../mjpage/index.css`, {hasMap: true, compress:true});

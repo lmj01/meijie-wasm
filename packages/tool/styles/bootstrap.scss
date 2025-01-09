@@ -1,3 +1,6 @@
+// $primary: #f00;
+@import './variables.scss';
+
 @import "../../../node_modules/bootstrap/scss/bootstrap.scss";
 
 $wWebkitScrollbar: 5px !default;
@@ -11,4 +14,15 @@ $wWebkitScrollbar: 5px !default;
 
 div[aria-hidden="true"] {
     display: none !important;
+}
+
+[data-bs-theme=light] {
+    --bs-body-bg: #f5f6f8;
+    --bs-body-color: #606266;
+    --bs-primary-border-color: #909090;
+}
+[data-bs-theme=dark] {
+    --bs-body-bg: #3d3d3d;
+    --bs-body-color: #cfd3dc;    
+    --bs-primary-border-color: #909090;
 }

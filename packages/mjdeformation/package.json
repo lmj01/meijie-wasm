@@ -10,6 +10,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "earcut": "^3.0.1"
+    "earcut": "^3.0.1",
+    "manifold-3d": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/earcut": "^2.1.4"
   }
 }
