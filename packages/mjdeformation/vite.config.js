@@ -11,6 +11,7 @@ const rollupOptionsInput = {
 export default defineConfig({
     optimizeDeps: {
         // exclude: [/worker/g],
+        exclude: ['manifold/manifold.wasm']
     },
     plugins: [],
     resolve: {
