@@ -16,6 +16,9 @@ const DRACO_DIR = path.resolve(BUILD_DIR, DRACO_DIR_NAME);
 const EIGEN_DIR_NAME = 'eigen';
 const EIGEN_DIR = path.resolve(DEFORMATION_DIR, EIGEN_DIR_NAME);
 
+const MANIFOLD_NAME = 'manifold';
+const MANIFOLD_DIR = path.resolve(BUILD_DIR, MANIFOLD_NAME);
+
 /**
  * Due to a WebXR error, we need to use --skipLibCheck
  */
@@ -56,7 +59,7 @@ const libs = [
         // tag: '8786740086a9f4d83f44aa83badfbea4dce7a1b5',        
         dir: DRACO_DIR,
         action: [updateSubmoduleDraco],
-        command: undefined
+        command: undefined,
     },
     {
         name: 'eigen',
@@ -64,7 +67,15 @@ const libs = [
         tag: '3.4.0',
         dir: EIGEN_DIR,
         action: [],
-        command: undefined
+        command: undefined,
+    },
+    {
+	name: 'manifold',
+	url: 'https://github.com/elalish/manifold.git',
+	tag: 'v3.0.1',
+	dir: MANIFOLD_DIR,
+	action: [],
+	command: undefined,
     }
 ]
 
