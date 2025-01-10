@@ -1,11 +1,10 @@
 import {
-    alias3, MqMultiViewEditor, PathLoader, bindDracoEncoder,
-    rBufferToModel,
+    alias3, MqMultiViewEditor,
 } from 'mjdraco/src/third/mq-render/viewer.es'
 import manifold from 'manifold-3d/manifold.js'
 import manifoldWasm from 'manifold-3d/manifold.wasm?url';
+import { Manifold } from 'manifold-3d/manifold-encapsulated-types'
 import earcut, { deviation } from 'earcut';
-import drc45 from './assets/45.drc?url';
 import 'tool/b5.theme'
 
 // https://manifoldcad.org/jsdocs/documents/Get_Started.html
@@ -15,6 +14,7 @@ let app: any = {
     meshes: [],
     markList: [],
     app3,
+    opIdx: 0,
 };
 (<any>window).app = app;
 const viewState = [
@@ -30,32 +30,73 @@ const viewState = [
         scene: new alias3.Scene(),
     },
 ];
+const cMaterials = [
+    new alias3.MeshBasicMaterial({ 
+        color: new alias3.Color().setStyle('#ff0000'), 
+        side: alias3.DoubleSide,
+    }),
+    new alias3.MeshBasicMaterial({ 
+        color: new alias3.Color().setStyle('#00ff00'), 
+        side: alias3.DoubleSide,
+    }),
+    new alias3.MeshBasicMaterial({ 
+        color: new alias3.Color().setStyle('#0000ff'), 
+        side: alias3.DoubleSide,
+    }),
+]
+const cOptions = ['union','difference','intersection'];
+function manifold2Mesh3(index: number, mainfold: Manifold) {
+    // visit vertex
+    // mainfold.warp((v)=>{
+    //     console.log(v);
+    // })    
+    const id = mainfold.originalID();
+    const mesh = mainfold.getMesh(id);
+    const geo = new alias3.BufferGeometry();
+    geo.setAttribute('position', new alias3.BufferAttribute(mesh.vertProperties, 3));
+    geo.setIndex(new alias3.BufferAttribute(mesh.triVerts, 1))
+    const mesh3 = new alias3.Mesh(geo, cMaterials[index]);
+    // console.log(id, mesh, geo);
+    return mesh3;
+}
 async function initManifold() {
     // https://github.com/donalffons/opencascade.js/issues/268
     const module = await manifold({
         locateFile: () => manifoldWasm,
     })
     console.log(module)
+    // console.log(new alias3.BoxGeometry(5,5))
     module.setup();
     const { cube, sphere } = module.Manifold;
-    const box = cube([10,10,10], true);
+    const box = cube([10, 10, 10], true);
     const ball = sphere(6, 10);
-    const res = box.subtract(ball);
-    console.log(res, res.numVert(), res.numTri(), res.numProp(), res.numPropVert());
-    console.log(res.originalID(), res.getMesh(res.originalID()))
-    const meshOfManifold = res.getMesh(res.originalID());
-    const geo = new alias3.BufferGeometry();
-    geo.setAttribute('position', new alias3.BufferAttribute(meshOfManifold.vertProperties, meshOfManifold.numProp));
-    const mesh3 = new alias3.Mesh(geo);
-    app3.add(mesh3);
-    // console.log(res.getMesh())
-    // visit vertex
-    // res.warp((v)=>{
-    //     console.log(v);
-    // })
+    const mesh3Box = manifold2Mesh3(0, box);
+    mesh3Box.translateY(20);
+    app3.add(mesh3Box);
+    const mesh3Ball = manifold2Mesh3(1, ball);
+    mesh3Ball.translateY(-20);
+    app3.add(mesh3Ball);
+
+    function csg() {
+        const opName = cOptions[app.opIdx];
+        const mesh = module.Manifold[opName](box, ball).getMesh();
+        // console.log(mesh);
+        app3.remove('opMesh');    
+        const geo = new alias3.BufferGeometry();
+        geo.setAttribute('position', new alias3.BufferAttribute(mesh.vertProperties, 3));
+        geo.setIndex(new alias3.BufferAttribute(mesh.triVerts, 1))
+        const mesh3 = new alias3.Mesh(geo, cMaterials[2]);
+        mesh3.name = 'opMesh';
+        app3.add(mesh3);
+    }
+    csg();
+    document.getElementById('opSelect')?.addEventListener('change', (event)=>{
+        app.opIdx = event.target?.selectedIndex;
+        csg();
+    })
 }
-async function infoTriangle(geo:any) {
-    
+async function infoTriangle(geo: any) {
+
     const position = geo.attributes.position;
     console.log('count', position)
     const color = new alias3.Color().setStyle('#FF0000');
@@ -67,25 +108,20 @@ async function infoTriangle(geo:any) {
     }
     geo.attributes.color.needsUpdate = true;
 }
-async function init() {
-    const color = new alias3.Color().setStyle('#B1A298');
-    const loader = new PathLoader(drc45, { drcPath: 'libs/draco/' })
-    let geometry = await loader.load(drc45);
-    let mesh = rBufferToModel({ buffer :geometry }, { color });
-    mesh.visible = true;
-    mesh.translateX(20);
-    app3.add(mesh);
-    infoTriangle(geometry);
-}
 function setupUI() {
-    const btn = document.createElement('button');
-    btn.classList.add('btn', 'btn-primary');
-    btn.style.cssText = `position:fixed;top:50px;right:20px;`;
-    btn.textContent = 'test style';
-    document.body.appendChild(btn);
+    const select = document.createElement('select');
+    select.id='opSelect';
+    select.classList.add('form-select', 'form-select-sm');
+    select.style.cssText = `position:fixed;top:50px;right:20px;width:160px;`;
+    cOptions.forEach((opt,index)=>{
+        const elOpt = document.createElement('option');
+        elOpt.setAttribute('value', `${index}`);
+        elOpt.textContent = opt;
+        select.options.add(elOpt);
+    })
+    document.body.appendChild(select);
 }
 window.onload = () => {
-    bindDracoEncoder(`libs/draco/draco_encoder.js`);
     const elApp = document.getElementById('app');
     const elRc = elApp?.getBoundingClientRect();
     app3.init({
@@ -101,7 +137,6 @@ window.onload = () => {
     app3.callAnimate();
     app3.updateFrame();
     app3.setAxes(0.5, 2e-3, { textScaleFactor: 0.1 });
-    init();    
     setupUI();
     initManifold();
 }
