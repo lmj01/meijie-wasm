@@ -4,7 +4,7 @@ cpp/builddraco
 cpp/bdeformation
 cpp/deformation/third_party
 cpp/bunny.*
-
+third/
 packages/mjdraco/index.css
 packages/mjdraco/index.css.map
 packages/mjdraco/src/assets/*.drc
