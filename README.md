@@ -7,7 +7,6 @@ npm init -w ./packages/mjdraco
 npm init -w ./packages/mjdeformation
 npm init -w ./packages/tool
 npm init -w ./packages/mjpage
-npm init -w ./packages/mjbit2
 npm init -w ./packages/mjvtk
 ```
 
@@ -20,9 +19,9 @@ npm init -w ./packages/mjvtk
 
 - http://localhost:7110/bvh.html
 
-## [bitbybit](https://docs.bitbybit.dev/)
+## wasm
 
-- [demo threejs](https://github.com/bitbybit-dev/app-examples/blob/main/react/threejs/vase/src/index.tsx)
+- [vite load wasm problem](https://github.com/donalffons/opencascade.js/issues/268)
 
 ## vtk
 
