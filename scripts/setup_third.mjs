@@ -61,23 +61,34 @@ const libs = [
 
 async function setupLibs() {
     for (const lib of libs) {
+        let isSsh = false, supportSsh = false;
         if (!fs.existsSync(lib.dir)) {
             console.log(`Cloning ${lib.name}...`);
-            await execAsync(`git clone --depth=1 -b ${lib.tag} ${lib.url} ${lib.dir}`);
+            if (lib.url.startsWith('git@')) {
+                isSsh = true;
+                const code = await execAsync(`git ls-remote ${lib.url}`);
+                supportSsh = code !== 1;
+                console.warn(code, supportSsh)
+            }
+            if (!isSsh || isSsh && supportSsh) {
 
-            if (!fs.existsSync(lib.dir)) {
-                console.error(`Failed to clone ${lib.name}`);
-                process.exit(1);
+                await execAsync(`git clone --depth=1 -b ${lib.tag} ${lib.url} ${lib.dir}`);
+
+                if (!fs.existsSync(lib.dir)) {
+                    console.error(`Failed to clone ${lib.name}`);
+                    process.exit(1);
+                }
             }
         }
+        if (!isSsh || isSsh && supportSsh) {
+            console.log(`Seting up ${lib.name}...`);
+            if (lib.command) {
+                await execAsync(lib.command);
+            }
 
-        console.log(`Seting up ${lib.name}...`);
-        if (lib.command) {
-            await execAsync(lib.command);
-        }
-
-        for (const action of lib.action) {
-            await action();
+            for (const action of lib.action) {
+                await action();
+            }
         }
     }
 }
