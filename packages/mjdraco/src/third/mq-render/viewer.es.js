@@ -29528,7 +29528,8 @@ function toLocalFile(arrBuffer, filename) {
 const ud = {
   boxOfScene: 90,
   // 场景大小
-  boxOfEditorTarget: 120
+  maxSideEditor: 120,
+  maxSideEditorNew: void 0
 };
 const cameraViews = {
   anterior: {
@@ -29558,36 +29559,67 @@ const cameraViews = {
   },
   editorJawFront: {
     up: [0, 1, 0],
-    position: [0, 0, ud.boxOfEditorTarget],
+    position: [0, 0, ud.maxSideEditor],
+    rotation: [0, 0, 0]
+  },
+  editorJawBack: {
+    up: [0, -1, 0],
+    position: [0, 0, -ud.maxSideEditor],
     rotation: [0, 0, 0]
   },
   editorJawUpper: {
     up: [0, 0, 1],
-    position: [0, -ud.boxOfEditorTarget, 0],
+    position: [0, -ud.maxSideEditor, 0],
     rotation: [MathUtils.degToRad(90), 0, 0]
   },
   editorJawLower: {
     up: [0, 0, -1],
-    position: [0, ud.boxOfEditorTarget, 0],
+    position: [0, ud.maxSideEditor, 0],
     rotation: [MathUtils.degToRad(-90), 0, 0]
   },
   editorJawRight: {
     up: [0, 1, 0],
-    position: [ud.boxOfEditorTarget, 0, 0],
+    position: [ud.maxSideEditor, 0, 0],
     rotation: [0, MathUtils.degToRad(-65), 0]
   },
   editorJawLeft: {
     up: [0, 1, 0],
-    position: [-ud.boxOfEditorTarget, 0, 0],
+    position: [-ud.maxSideEditor, 0, 0],
     rotation: [0, MathUtils.degToRad(65), 0]
   }
 };
+function getCameraGesture(name) {
+  const info = cameraViews[name];
+  if (ud.maxSideEditorNew) {
+    for (let i = 0; i < info.position.length; i++) {
+      let tmp2 = info.position[i];
+      if (Math.abs(tmp2) == ud.maxSideEditor) {
+        info.position[i] = tmp2 > 0 ? ud.maxSideEditorNew : -ud.maxSideEditorNew;
+      }
+    }
+  }
+  return info;
+}
 function viewDir(index) {
   if (index == 1) return cameraViews["anteriorLeft"];
   else if (index == 3) return cameraViews["anteriorRight"];
   else if (index == 4) return cameraViews["anteriorLower"];
   else if (index == 5) return cameraViews["anteriorUpper"];
   return cameraViews["anterior"];
+}
+function editorViewDir(vDir, maxSide) {
+  if (maxSide) ud.maxSideEditorNew = maxSide;
+  let name = "";
+  if ([1, 2, 3, 4, 5, 6].includes(vDir)) {
+    if (vDir === 1) name = "editorJawUpper";
+    else if (vDir === 2) name = "editorJawLower";
+    else if (vDir === 3) name = "editorJawRight";
+    else if (vDir === 4) name = "editorJawLeft";
+    else if (vDir === 5) name = "editorJawFront";
+    else if (vDir === 6) name = "editorJawBack";
+  }
+  if (name) return getCameraGesture(name);
+  throw new Error(`un-support view dir ${vDir}`);
 }
 function setXYZ(arr, i, x, y, z) {
   arr[i + 0] = x;
@@ -29717,6 +29749,10 @@ class SwitchCamera extends Camera {
     const vpWidth = this.getOrthoViewWidth(projectionMatrix) / zoom;
     return vpWidth;
   }
+  /**
+   * @deprecated 
+   * @param code 
+   */
   updateViewDir(code) {
     const { camera } = this;
     const data = viewDir(code);
@@ -30660,7 +30696,7 @@ class MqRender {
         root.geometry.computeBoundingBox();
         bbx2.union(root.geometry.boundingBox);
       } else {
-        root.children.forEach((e) => getBoundingBox(e, bbx2));
+        if (root.children) root.children.forEach((e) => getBoundingBox(e, bbx2));
       }
     }
     const box3 = new Box3();
@@ -30811,6 +30847,28 @@ class MqRender {
   }
   addAfterHandler(e) {
     this.handler4After.push(e);
+  }
+  alignment2Camera(vDir, maxSide) {
+    const info = editorViewDir(vDir, maxSide);
+    if (info) this.setCameraType(info);
+  }
+  setCameraType(data) {
+    const { camera, control, options } = this;
+    const curCamera = camera.getCamera();
+    if (control) control.reset();
+    const sideSize = options.cameraPositionZ;
+    curCamera.lookAt(0, 0, 0);
+    curCamera.up.set(0, 1, 0);
+    curCamera.position.set(0, 0, sideSize);
+    curCamera.quaternion.identity();
+    curCamera.scale.set(1, 1, 1);
+    curCamera.up.set(data.up[0], data.up[1], data.up[2]);
+    const positions = data.position.map((e) => e !== 0 ? e < 0 ? -sideSize : sideSize : e);
+    curCamera.position.set(positions[0], positions[1], positions[2]);
+    curCamera.rotation.set(data.rotation[0], data.rotation[1], data.rotation[2]);
+    curCamera.updateProjectionMatrix();
+    if (control) control.update();
+    this.updateFrame();
   }
 }
 function localUpdateCamera(camera, scene, oCamera, options) {
@@ -31109,7 +31167,8 @@ class StrSprite {
     const material = new SpriteMaterial({
       map: this.texture,
       depthTest: false,
-      depthFunc: AlwaysDepth
+      transparent: true
+      // depthFunc: AlwaysDepth,
     });
     this.target = new Sprite(material);
     this.target.name = `${options.name ? options.name : ""}${text}`;
@@ -31151,7 +31210,8 @@ class StrMesh {
     this.textMap.set(text, cell);
     const material = new ShaderMaterial({
       transparent: true,
-      // depthTest: false,
+      depthTest: false,
+      side: FrontSide,
       vertexShader: strTexture.vs,
       fragmentShader: strTexture.fs,
       uniforms: {
@@ -31348,7 +31408,7 @@ class MqMultiViewEditor extends MqRender {
     rc.height = height;
     this.resize(width, height);
   }
-  computeSceneBox() {
+  computeSceneBox(inOption = {}) {
     var _a;
     const { options, cameraAngle, camera } = this;
     const sides = [];
@@ -31363,6 +31423,9 @@ class MqMultiViewEditor extends MqRender {
         idx = i;
         maxSide = sides[i].side;
       }
+    }
+    if (inOption.useZ) {
+      maxSide = Math.max(options.cameraPositionZ, maxSide);
     }
     camera.persp.position.z = maxSide * 3;
     camera.ortho.position.z = maxSide * 3;
@@ -31671,6 +31734,7 @@ const TeethShader = {
             }
 		`
 };
+const cModelDefaultColor = "rgb(179,142,107)";
 const cModelCrownColor = {
   r: 232 / 255,
   g: 217 / 255,
@@ -32078,8 +32142,15 @@ function mat2Mesh(elments, mesh, options = {}) {
   mesh.updateMatrixWorld();
 }
 function create4ToothNumberMesh(group, options = {}) {
-  const uMeshList = group.children.filter((e) => e.userData.isUpper && e.userData.code != "10");
-  const lMeshList = group.children.filter((e) => !e.userData.isUpper && e.userData.code != "40");
+  const filterMesh = ({ code, isUpper }, isUpperJaw) => {
+    if (code !== void 0 && isUpper !== void 0) {
+      if (isUpperJaw) return isUpper && code != "10";
+      else return !isUpper && code != "40";
+    }
+    return false;
+  };
+  const uMeshList = group.children.filter((e) => filterMesh(e.userData, true));
+  const lMeshList = group.children.filter((e) => filterMesh(e.userData, false));
   const info = { upper: [], lower: [] };
   uMeshList.forEach((e) => info.upper.push(computeToothInfo(e, options)));
   lMeshList.forEach((e) => info.lower.push(computeToothInfo(e, options)));
@@ -32112,6 +32183,8 @@ function computeToothInfo(target, options = {}) {
     if (mesh.visible) {
       mesh.quaternion.rotateTowards(camera.quaternion, 1);
     }
+  };
+  mesh.onAfterRender = (renderer, scene, camera, geometry, material, group) => {
   };
   mesh.visible = false;
   target.add(mesh);
@@ -36503,7 +36576,9 @@ const alias3 = {
   // geometry
   BufferGeometryUtils,
   // math
-  Lut
+  Lut,
+  // other constatns
+  cModelDefaultColor
 };
 const aliasBvh = {
   computeBoundsTree,

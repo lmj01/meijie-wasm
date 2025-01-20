@@ -8,6 +8,7 @@ npm init -w ./packages/mjdeformation
 npm init -w ./packages/tool
 npm init -w ./packages/mjpage
 npm init -w ./packages/mjvtk
+npm init -w ./packages/mjffmpeg
 ```
 
 ### esm

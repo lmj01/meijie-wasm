@@ -14,6 +14,9 @@ const MESHOPTIMIZER_DIR = path.resolve(THIRD_ROOT, MESHOPTIMIZER_DIR_NAME);
 const MANIFOLD_DIR_NAME = 'manifold';
 const MANIFOLD_DIR = path.resolve(THIRD_ROOT, MANIFOLD_DIR_NAME);
 
+const VTKJS_DIR_NAME = 'vtk.js';
+const VTKJS_DIR = path.resolve(THIRD_ROOT, VTKJS_DIR_NAME);
+
 async function updateSubmoduleDraco() {
     // await execAsync(`git submodule init`);
     console.log(DRACO_DIR)
@@ -43,6 +46,14 @@ const libs = [
         url: 'https://github.com/elalish/manifold.git',
         tag: 'v3.0.1',
         dir: MANIFOLD_DIR,
+        action: [],
+        command: undefined
+    },
+    {
+        name: 'vtk.js',
+        url: 'https://github.com/Kitware/vtk-js.git',
+        tag: 'v32.9.0',
+        dir: VTKJS_DIR,
         action: [],
         command: undefined
     }

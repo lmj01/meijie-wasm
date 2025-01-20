@@ -1,0 +1,15 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+      "baseUrl": "./",
+      // "composite": true,
+      "noEmit": false,
+      "outDir": "./dist",
+      "rootDirs": ["src"],
+      "declaration": true,
+      "emitDeclarationOnly": true,
+      "declarationDir": "./dist/types"
+    },
+    "include": ["./src", "../tools/enums.ts"],
+  }
+  
