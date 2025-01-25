@@ -14,6 +14,9 @@ const MESHOPTIMIZER_DIR = path.resolve(THIRD_ROOT, MESHOPTIMIZER_DIR_NAME);
 const MANIFOLD_DIR_NAME = 'manifold';
 const MANIFOLD_DIR = path.resolve(THIRD_ROOT, MANIFOLD_DIR_NAME);
 
+const VTK_DIR_NAME = 'vtk';
+const VTK_DIR = path.resolve(THIRD_ROOT, VTK_DIR_NAME);
+
 const VTKJS_DIR_NAME = 'vtk.js';
 const VTKJS_DIR = path.resolve(THIRD_ROOT, VTKJS_DIR_NAME);
 
@@ -46,6 +49,14 @@ const libs = [
         url: 'https://github.com/elalish/manifold.git',
         tag: 'v3.0.1',
         dir: MANIFOLD_DIR,
+        action: [],
+        command: undefined
+    },
+    {
+        name: 'vtk',
+        url: 'https://gitlab.kitware.com/vtk/vtk.git',
+        tag: 'v9.4.1',
+        dir: VTK_DIR,
         action: [],
         command: undefined
     },
