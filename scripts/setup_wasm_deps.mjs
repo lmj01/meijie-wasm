@@ -5,6 +5,8 @@ import { execAsync } from './common.mjs';
 
 const CPP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../cpp/')
 const BUILD_DIR = path.resolve(CPP_ROOT, 'build');
+const ENTT_THIRD_DIR = path.resolve(CPP_ROOT, 'entt/third');
+const BGFX_THIRD_DIR = path.resolve(CPP_ROOT, 'bgfx/third');
 const DEFORMATION_DIR = path.resolve(CPP_ROOT, 'deformation/third_party');
 
 const EMSDK_DIR_NAME = 'emsdk';
@@ -18,6 +20,12 @@ const EIGEN_DIR = path.resolve(DEFORMATION_DIR, EIGEN_DIR_NAME);
 
 const MANIFOLD_NAME = 'manifold';
 const MANIFOLD_DIR = path.resolve(BUILD_DIR, MANIFOLD_NAME);
+
+const BGFX_APP_DIR_NAME = 'app';
+const BGFX_APP_DIR = path.resolve(BGFX_THIRD_DIR, BGFX_APP_DIR_NAME);
+
+const ENTT_DIR_NAME = 'entt';
+const ENTT_DIR = path.resolve(ENTT_THIRD_DIR, ENTT_DIR_NAME);
 
 /**
  * Due to a WebXR error, we need to use --skipLibCheck
@@ -70,12 +78,28 @@ const libs = [
         command: undefined,
     },
     {
-	name: 'manifold',
-	url: 'https://github.com/elalish/manifold.git',
-	tag: 'v3.0.1',
-	dir: MANIFOLD_DIR,
-	action: [],
-	command: undefined,
+        name: 'app1',
+        url: 'https://github.com/lmj01/bgfx-app.git',
+        tag: 'v1.0.0',
+        dir: BGFX_APP_DIR,
+        action: [],
+        command: undefined
+    },
+    {
+        name: 'entt',
+        url: 'https://github.com/skypjack/entt.git',
+        tag: 'v3.15.0',
+        dir: ENTT_DIR,
+        action: [],
+        command: undefined,
+    },
+    {
+        name: 'manifold',
+        url: 'https://github.com/elalish/manifold.git',
+        tag: 'v3.0.1',
+        dir: MANIFOLD_DIR,
+        action: [],
+        command: undefined,
     }
 ]
 

@@ -30,3 +30,6 @@ npm init -w ./packages/mjffmpeg
     - [vtk C++ Api](https://vtk.org/doc/nightly/html/index.html)
 
 - [vtk-vue](https://github.com/Kitware/vtk-js/blob/master/Documentation/content/docs/vtk_vue.md)
+
+## bgfx
+- [A simple 3D rendering project using bgfx that displays a rotating cube. The project supports both native (desktop) builds and WebAssembly compilation via Emscripten.](https://github.com/paulocoutinhox/bgfx-app)
