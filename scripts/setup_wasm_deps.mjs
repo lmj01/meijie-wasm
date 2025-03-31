@@ -6,7 +6,6 @@ import { execAsync } from './common.mjs';
 const CPP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../cpp/')
 const BUILD_DIR = path.resolve(CPP_ROOT, 'build');
 const ENTT_THIRD_DIR = path.resolve(CPP_ROOT, 'entt/third');
-const BGFX_THIRD_DIR = path.resolve(CPP_ROOT, 'bgfx/third');
 const DEFORMATION_DIR = path.resolve(CPP_ROOT, 'deformation/third_party');
 
 const EMSDK_DIR_NAME = 'emsdk';
@@ -21,8 +20,8 @@ const EIGEN_DIR = path.resolve(DEFORMATION_DIR, EIGEN_DIR_NAME);
 const MANIFOLD_NAME = 'manifold';
 const MANIFOLD_DIR = path.resolve(BUILD_DIR, MANIFOLD_NAME);
 
-const BGFX_APP_DIR_NAME = 'app';
-const BGFX_APP_DIR = path.resolve(BGFX_THIRD_DIR, BGFX_APP_DIR_NAME);
+const BGFX_APP_DIR_NAME = 'bgfxapp';
+const BGFX_APP_DIR = path.resolve(CPP_ROOT, BGFX_APP_DIR_NAME);
 
 const ENTT_DIR_NAME = 'entt';
 const ENTT_DIR = path.resolve(ENTT_THIRD_DIR, ENTT_DIR_NAME);

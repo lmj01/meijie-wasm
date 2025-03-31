@@ -6,6 +6,7 @@
   "scripts": {
     "build:draco": "cd cpp && cmake --preset release && cmake --build --preset release",
     "build:entt": "cd cpp/entt && cmake --preset release && cmake --build --preset release",
+    "build:bgfx": "cd cpp/bgfxapp && cmake -D CMAKE_MAKE_PROGRAM=ninja --preset release && cmake -D CMAKE_MAKE_PROGRAM=ninja --build --preset release",
     "setup:wasm": "node scripts/setup_wasm_deps.mjs",
     "setup:third": "node scripts/setup_third.mjs"
   },
