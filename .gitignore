@@ -1,9 +1,11 @@
 node_modules
 cpp/build
+cpp/build/target
 cpp/builddraco
 cpp/bdeformation
 cpp/deformation/third_party
 cpp/bunny.*
+cpp/bgfxapp
 third/
 packages/mjdraco/index.css
 packages/mjdraco/index.css.map

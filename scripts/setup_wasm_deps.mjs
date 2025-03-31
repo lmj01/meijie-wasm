@@ -79,7 +79,7 @@ const libs = [
     {
         name: 'app1',
         url: 'https://github.com/lmj01/bgfx-app.git',
-        tag: 'v1.0.0',
+        tag: 'v1.0.1',
         dir: BGFX_APP_DIR,
         action: [],
         command: undefined
