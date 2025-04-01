@@ -4,6 +4,7 @@ cpp/build/target
 cpp/builddraco
 cpp/bdeformation
 cpp/deformation/third_party
+cpp/opengl/build
 cpp/bunny.*
 cpp/bgfxapp
 third/
