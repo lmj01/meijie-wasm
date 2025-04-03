@@ -10,6 +10,7 @@ cpp/opengl/build
 cpp/opengl/_deps
 cpp/bgfx/_deps
 cpp/bgfx/build
+cpp/bgfx/install
 cpp/bunny.*
 third/
 packages/mjdraco/index.css

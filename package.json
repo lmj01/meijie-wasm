@@ -6,11 +6,11 @@
   "scripts": {
     "build:draco": "cd cpp && cmake --preset release && cmake --build --preset release",
     "build:entt": "cd cpp/entt && cmake --preset release && cmake --build --preset release",
-    "web:cad": "cd cpp/cad && cmake --preset release && cmake --build --preset release",
-    "web:bgfx": "cd cpp/bgfx && cmake --preset release && cmake --build --preset release",
-    "bgfx:win": "cd cpp/bgfx && cmake --preset release && cmake --build --preset release",
-    "entt:win": "cd cpp/entt && cmake --preset release && cmake --build --preset release",
-    "ogl:win": "cd cpp/opengl && cmake --preset release && cmake --build --preset release",
+    "cad:web": "cd cpp/cad && cmake --preset web-deformation && cmake --build --preset web-deformation",
+    "bgfx:web": "cd cpp/bgfx && cmake --preset web && cmake --build --preset web",
+    "bgfx:pc": "cd cpp/bgfx && cmake --preset release && cmake --build --preset release",
+    "entt:pc": "cd cpp/entt && cmake --preset release && cmake --build --preset release",
+    "ogl:pc": "cd cpp/opengl && cmake --preset release && cmake --build --preset release",
     "setup:wasm": "node scripts/setup_wasm_deps.mjs",
     "setup:third": "node scripts/setup_third.mjs"
   },

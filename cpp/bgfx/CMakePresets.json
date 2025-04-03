@@ -2,7 +2,7 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "default",
+            "name": "emscripten",
             "generator": "Ninja",
             "hidden": true,
             "toolchainFile": "${sourceDir}/../build/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
@@ -24,9 +24,18 @@
             }
         },        
         {
+            "name": "web",
+            "inherits": "emscripten",
+            "displayName": "Emscripten Web",
+            "binaryDir": "${sourceDir}/build/web",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
             "name": "debug",
-            "inherits": "default",
-            "displayName": "Emscripten Debug",
+            "inherits": "windows",
+            "displayName": "Emscripten debug",
             "binaryDir": "${sourceDir}/build/debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
@@ -52,6 +61,12 @@
         {
             "name": "release",
             "configurePreset": "release",
+            "configuration": "Release",
+            "targets": ["install"]
+        },
+        {
+            "name": "web",
+            "configurePreset": "web",
             "configuration": "Release",
             "targets": ["install"]
         }

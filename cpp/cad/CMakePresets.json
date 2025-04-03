@@ -2,7 +2,7 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "default",
+            "name": "emscripten",
             "generator": "Ninja",
             "hidden": true,
             "toolchainFile": "${sourceDir}/../build/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
@@ -20,6 +20,13 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
+        },
+        {
+            "name": "web-deformation",
+            "inherits": "emscripten",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
     ],
     "buildPresets": [
@@ -31,6 +38,11 @@
         {
             "name": "release",
             "configurePreset": "release",
+            "configuration": "Release"
+        },
+        {
+            "name": "web-deformation",
+            "configurePreset": "web",
             "configuration": "Release"
         }
     ]
