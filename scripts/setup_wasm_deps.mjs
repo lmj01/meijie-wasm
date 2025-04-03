@@ -70,22 +70,22 @@ const libs = [
         action: [updateSubmoduleDraco],
         command: undefined,
     },
-    {
-        name: 'eigen',
-        url: 'https://gitlab.com/libeigen/eigen.git',
-        tag: '3.4.0',
-        dir: EIGEN_DIR,
-        action: [],
-        command: undefined,
-    },
-    {
-        name: 'app',
-        url: 'https://github.com/lmj01/bgfx-app.git',
-        tag: 'v1.0.1',
-        dir: BGFX_APP_DIR,
-        action: [],
-        command: undefined
-    },
+    // {
+    //     name: 'eigen',
+    //     url: 'https://gitlab.com/libeigen/eigen.git',
+    //     tag: '3.4.0',
+    //     dir: EIGEN_DIR,
+    //     action: [],
+    //     command: undefined,
+    // },
+    // {
+    //     name: 'app',
+    //     url: 'https://github.com/lmj01/bgfx-app.git',
+    //     tag: 'v1.0.1',
+    //     dir: BGFX_APP_DIR,
+    //     action: [],
+    //     command: undefined
+    // },
     {
         name: 'entt',
         url: 'https://github.com/skypjack/entt.git',
@@ -102,14 +102,14 @@ const libs = [
         action: [],
         command: undefined,
     },
-    {
-        name: 'solvespace',
-        url: 'https://github.com/solvespace/solvespace.git',
-        tag: 'v3.0.1',
-        dir: SOLVESPACE_DIR,
-        action: [],
-        command: undefined,
-    }
+    // {
+    //     name: 'solvespace',
+    //     url: 'https://github.com/solvespace/solvespace.git',
+    //     tag: 'v3.0.1',
+    //     dir: SOLVESPACE_DIR,
+    //     action: [],
+    //     command: undefined,
+    // }
 ]
 
 async function setupLibs() {

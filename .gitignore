@@ -2,13 +2,14 @@ node_modules
 cpp/build
 cpp/build/target
 cpp/builddraco
-cpp/bdeformation
-cpp/deformation/third_party
+cpp/cad/build
+cpp/cad/_deps
 cpp/entt/build
 cpp/entt/entt
 cpp/opengl/build
 cpp/opengl/_deps
 cpp/bgfx/_deps
+cpp/bgfx/build
 cpp/bunny.*
 third/
 packages/mjdraco/index.css

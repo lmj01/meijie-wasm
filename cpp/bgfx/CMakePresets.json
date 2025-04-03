@@ -8,6 +8,22 @@
             "toolchainFile": "${sourceDir}/../build/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
         },
         {
+            "name": "windows",
+            "displayName": "Windows preset",
+            "description": "Preset for building on Windows",
+            "generator": "Visual Studio 16 2019",
+            "binaryDir": "${sourceDir}/build/windows",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/windows"
+            },
+            "condition": {
+              "type": "equals",
+              "lhs": "${hostSystemName}",
+              "rhs": "Windows"
+            }
+        },        
+        {
             "name": "debug",
             "inherits": "default",
             "displayName": "Emscripten Debug",
@@ -18,7 +34,7 @@
         },
         {
             "name": "release",
-            "inherits": "default",
+            "inherits": "windows",
             "displayName": "Emscripten Release",
             "binaryDir": "${sourceDir}/build/release",
             "cacheVariables": {
