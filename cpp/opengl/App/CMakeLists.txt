@@ -5,7 +5,7 @@ set(SOURCE_DIR "Source")
 
 # Define the source and destination paths for the shader
 set(SHADER_SOURCE "${CMAKE_SOURCE_DIR}/App/Shaders/Compute.glsl")
-set(SHADER_DESTINATION "${CMAKE_BINARY_DIR}/App/Shaders/Compute.glsl")
+set(SHADER_DESTINATION "${CMAKE_BINARY_DIR}/App/${CMAKE_BUILD_TYPE}/Shaders/Compute.glsl")
 
 set(SOURCES
     Source/Main.cpp
