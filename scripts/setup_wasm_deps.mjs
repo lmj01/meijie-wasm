@@ -5,7 +5,9 @@ import { execAsync } from './common.mjs';
 
 const CPP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../cpp/')
 const BUILD_DIR = path.resolve(CPP_ROOT, 'build');
-const ENTT_THIRD_DIR = path.resolve(CPP_ROOT, 'entt/third');
+const ENTT_DIR = path.resolve(CPP_ROOT, 'entt/entt');
+const BGFX_DIR = path.resolve(CPP_ROOT, 'bgfx');
+const CAD_DIR = path.resolve(CPP_ROOT, 'cad');
 const DEFORMATION_DIR = path.resolve(CPP_ROOT, 'deformation/third_party');
 
 const EMSDK_DIR_NAME = 'emsdk';
@@ -20,11 +22,11 @@ const EIGEN_DIR = path.resolve(DEFORMATION_DIR, EIGEN_DIR_NAME);
 const MANIFOLD_NAME = 'manifold';
 const MANIFOLD_DIR = path.resolve(BUILD_DIR, MANIFOLD_NAME);
 
-const BGFX_APP_DIR_NAME = 'bgfxapp';
-const BGFX_APP_DIR = path.resolve(CPP_ROOT, BGFX_APP_DIR_NAME);
+const SOLVESPACE_DIR_NAME = 'solvespace';
+const SOLVESPACE_DIR = path.resolve(CAD_DIR, SOLVESPACE_DIR_NAME);
 
-const ENTT_DIR_NAME = 'entt';
-const ENTT_DIR = path.resolve(ENTT_THIRD_DIR, ENTT_DIR_NAME);
+const BGFX_APP_DIR_NAME = 'app';
+const BGFX_APP_DIR = path.resolve(BGFX_DIR, BGFX_APP_DIR_NAME);
 
 /**
  * Due to a WebXR error, we need to use --skipLibCheck
@@ -43,7 +45,7 @@ async function fixEmscripten() {
 
 async function updateSubmoduleDraco() {
     // await execAsync(`git submodule init`);
-    console.log(DRACO_DIR)
+    console.log(DRACO_DIR); 
     await execAsync(`cd ${DRACO_DIR} && git submodule sync`);
     await execAsync(`cd ${DRACO_DIR} && git submodule update --init -f --recursive`);
 }
@@ -77,7 +79,7 @@ const libs = [
         command: undefined,
     },
     {
-        name: 'app1',
+        name: 'app',
         url: 'https://github.com/lmj01/bgfx-app.git',
         tag: 'v1.0.1',
         dir: BGFX_APP_DIR,
@@ -97,6 +99,14 @@ const libs = [
         url: 'https://github.com/elalish/manifold.git',
         tag: 'v3.0.1',
         dir: MANIFOLD_DIR,
+        action: [],
+        command: undefined,
+    },
+    {
+        name: 'solvespace',
+        url: 'https://github.com/solvespace/solvespace.git',
+        tag: 'v3.0.1',
+        dir: SOLVESPACE_DIR,
         action: [],
         command: undefined,
     }

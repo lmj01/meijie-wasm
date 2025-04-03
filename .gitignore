@@ -4,15 +4,16 @@ cpp/build/target
 cpp/builddraco
 cpp/bdeformation
 cpp/deformation/third_party
+cpp/entt/build
+cpp/entt/entt
 cpp/opengl/build
 cpp/opengl/_deps
+cpp/bgfx/_deps
 cpp/bunny.*
-cpp/bgfxapp
 third/
 packages/mjdraco/index.css
 packages/mjdraco/index.css.map
 packages/mjdraco/src/assets/*.drc
-cpp/entt/build
 
 
 
