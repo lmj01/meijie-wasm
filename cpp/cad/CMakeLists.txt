@@ -17,7 +17,7 @@ include(FetchContent)
 FetchContent_Declare(
     solvespace
     GIT_REPOSITORY https://github.com/solvespace/solvespace.git
-    GIT_TAG v1.129.8866-492
+    GIT_TAG v3.1
     SOURCE_DIR ${CMAKE_SOURCE_DIR}/_deps/solvespace-src
     BINARY_DIR ${CMAKE_SOURCE_DIR}/_deps/solvespace-build
 )
