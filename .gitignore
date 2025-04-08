@@ -1,9 +1,14 @@
 node_modules
+build
+_deps
+install
+
 cpp/build
 cpp/build/target
-cpp/builddraco
 cpp/cad/build
 cpp/cad/_deps
+cpp/draco/draco
+cpp/draco/build
 cpp/entt/build
 cpp/entt/entt
 cpp/opengl/build

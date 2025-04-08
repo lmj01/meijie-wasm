@@ -2,10 +2,10 @@
 #include <vector>
 #include <iostream>
 
-#include "draco/io/file_utils.h"
-#include "draco/io/mesh_io.h"
-#include "draco/io/gltf_decoder.h"
-#include "draco/io/gltf_encoder.h"
+#include <draco/io/file_utils.h>
+#include <draco/io/mesh_io.h>
+#include <draco/io/gltf_decoder.h>
+#include <draco/io/gltf_encoder.h>
 // ref: https://github.com/google/draco/issues/770  https://github.com/google/draco/issues/750
 
 int main(int argc, char* argv[])
@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 
 	// ---------- Import File -----------
 
-	const std::string glbPath = "E:/model/cube1.glb";
+	const std::string glbPath = argv[1];
 	
 	draco::GltfDecoder gltfDecoder;
 	auto glbMesh = gltfDecoder.DecodeFromFile(glbPath);
@@ -115,12 +115,12 @@ int main(int argc, char* argv[])
 	auto dracoMesh = builder.Finalize();
 
 	draco::GltfEncoder gltfEncoder;
-	std::string cubePath = "D:/cube.glb";
+	std::string cubePath = argc > 2 ? argv[2] :  "./cube.glb";
 	draco::DracoCompressionOptions compressOptions;
 	int compressionLevel = 6;  // compression level [0-10], most=10, least=0.
-	int qbPosition = 16;
+	draco::SpatialQuantizationOptions qbPosition{16};
 	compressOptions.compression_level = compressionLevel;
-	compressOptions.quantization_bits_position = qbPosition;
+	compressOptions.quantization_position = qbPosition;
 	dracoMesh->SetCompressionEnabled(true);
 	dracoMesh->SetCompressionOptions(compressOptions);
 	gltfEncoder.EncodeFile(*dracoMesh, cubePath);

@@ -8,12 +8,13 @@ const BUILD_DIR = path.resolve(CPP_ROOT, 'build');
 const ENTT_DIR = path.resolve(CPP_ROOT, 'entt/entt');
 const BGFX_DIR = path.resolve(CPP_ROOT, 'bgfx');
 const CAD_DIR = path.resolve(CPP_ROOT, 'cad');
+const DRACO_DIR = path.resolve(CPP_ROOT, 'draco');
 
 const EMSDK_DIR_NAME = 'emsdk';
 const EMSDK_DIR = path.resolve(BUILD_DIR, EMSDK_DIR_NAME);
 
 const DRACO_DIR_NAME = 'draco';
-const DRACO_DIR = path.resolve(BUILD_DIR, DRACO_DIR_NAME);
+const DRACO_LIB_DIR = path.resolve(DRACO_DIR, DRACO_DIR_NAME);
 
 const MANIFOLD_NAME = 'manifold';
 const MANIFOLD_DIR = path.resolve(BUILD_DIR, MANIFOLD_NAME);
@@ -40,10 +41,9 @@ async function fixEmscripten() {
 }
 
 async function updateSubmoduleDraco() {
-    // await execAsync(`git submodule init`);
-    console.log(DRACO_DIR); 
-    await execAsync(`cd ${DRACO_DIR} && git submodule sync`);
-    await execAsync(`cd ${DRACO_DIR} && git submodule update --init -f --recursive`);
+    console.log('handle draco action', `${DRACO_LIB_DIR}`); 
+    await execAsync(`cd ${DRACO_LIB_DIR} && git submodule sync`);
+    await execAsync(`cd ${DRACO_LIB_DIR} && git submodule update --init -f --recursive`);
 }
 
 const libs = [
@@ -62,26 +62,10 @@ const libs = [
         tag: '1.5.7',
         // url: 'https://github.com/lmj01/draco.git',
         // tag: '8786740086a9f4d83f44aa83badfbea4dce7a1b5',        
-        dir: DRACO_DIR,
+        dir: DRACO_LIB_DIR,
         action: [updateSubmoduleDraco],
         command: undefined,
     },
-    // {
-    //     name: 'eigen',
-    //     url: 'https://gitlab.com/libeigen/eigen.git',
-    //     tag: '3.4.0',
-    //     dir: EIGEN_DIR,
-    //     action: [],
-    //     command: undefined,
-    // },
-    // {
-    //     name: 'app',
-    //     url: 'https://github.com/lmj01/bgfx-app.git',
-    //     tag: 'v1.0.1',
-    //     dir: BGFX_APP_DIR,
-    //     action: [],
-    //     command: undefined
-    // },
     {
         name: 'entt',
         url: 'https://github.com/skypjack/entt.git',
@@ -97,15 +81,7 @@ const libs = [
         dir: MANIFOLD_DIR,
         action: [],
         command: undefined,
-    },
-    // {
-    //     name: 'solvespace',
-    //     url: 'https://github.com/solvespace/solvespace.git',
-    //     tag: 'v3.0.1',
-    //     dir: SOLVESPACE_DIR,
-    //     action: [],
-    //     command: undefined,
-    // }
+    }
 ]
 
 async function setupLibs() {

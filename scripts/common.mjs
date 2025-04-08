@@ -17,10 +17,8 @@ export async function execAsync(cmd) {
                 console.log(err);
                 reject(err)
                 process.exit(1)
-            }
-            console.error("error: ", stderr);
-            
-            console.log("stdout: ", stdout);
+            }            
+            console.log("stdout: \n", stdout);
             resolve(stdout);
         })
     })
