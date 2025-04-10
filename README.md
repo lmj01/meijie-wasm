@@ -33,3 +33,14 @@ npm init -w ./packages/mjffmpeg
 
 ## bgfx
 - [A simple 3D rendering project using bgfx that displays a rotating cube. The project supports both native (desktop) builds and WebAssembly compilation via Emscripten.](https://github.com/paulocoutinhox/bgfx-app)
+
+## draco 
+
+```shell
+# linux
+export EMSCRIPTEN=/path/emsdk/upstream/emscripten
+# windows
+set EMSCRIPTEN=X:\path\emsdk\upstream\emscripten
+```
+
+

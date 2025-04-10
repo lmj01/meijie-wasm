@@ -2,10 +2,17 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "default",
+            "name": "emscripten",
             "generator": "Ninja",
             "hidden": true,
-            "toolchainFile": "build/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+            "toolchainFile": "${sourceDir}/../build/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "DRACO_WASM": {
+                    "type": "STRING",
+                    "value": "ON"
+                }
+            }
         },
         {
             "name": "windows",
@@ -45,9 +52,9 @@
         },
         {
             "name": "web",
-            "inherits": "default",
+            "inherits": "emscripten",
             "displayName": "Emscripten Release",
-            "binaryDir": "build/target/web",
+            "binaryDir": "build/web",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
@@ -87,8 +94,7 @@
         {
             "name": "web",
             "configurePreset": "web",
-            "configuration": "Release",
-            "targets": ["install"]
+            "configuration": "Release"
         }
     ]
 }
