@@ -8,6 +8,7 @@ const BUILD_DIR = path.resolve(CPP_ROOT, 'build');
 const ENTT_DIR = path.resolve(CPP_ROOT, 'entt/entt');
 const BGFX_DIR = path.resolve(CPP_ROOT, 'bgfx');
 const CAD_DIR = path.resolve(CPP_ROOT, 'cad');
+const SOLVESPACE_ROOT_DIR = path.resolve(CPP_ROOT, 'solvespace');
 const DRACO_DIR = path.resolve(CPP_ROOT, 'draco');
 
 const EMSDK_DIR_NAME = 'emsdk';
@@ -20,7 +21,7 @@ const MANIFOLD_NAME = 'manifold';
 const MANIFOLD_DIR = path.resolve(BUILD_DIR, MANIFOLD_NAME);
 
 const SOLVESPACE_DIR_NAME = 'solvespace';
-const SOLVESPACE_DIR = path.resolve(CAD_DIR, SOLVESPACE_DIR_NAME);
+const SOLVESPACE_DIR = path.resolve(SOLVESPACE_ROOT_DIR, SOLVESPACE_DIR_NAME);
 
 const BGFX_APP_DIR_NAME = 'app';
 const BGFX_APP_DIR = path.resolve(BGFX_DIR, BGFX_APP_DIR_NAME);
@@ -79,6 +80,14 @@ const libs = [
         url: 'https://github.com/elalish/manifold.git',
         tag: 'v3.0.1',
         dir: MANIFOLD_DIR,
+        action: [],
+        command: undefined,
+    },
+    {
+        name: 'manifold',
+        url: 'https://github.com/solvespace/solvespace.git',
+        tag: 'v3.1',
+        dir: SOLVESPACE_DIR,
         action: [],
         command: undefined,
     }

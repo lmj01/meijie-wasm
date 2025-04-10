@@ -6,6 +6,7 @@
   "scripts": {
     "build:draco": "cd cpp && cmake --preset release && cmake --build --preset release",
     "build:entt": "cd cpp/entt && cmake --preset release && cmake --build --preset release",
+    "solvespace:web": "cd cpp/solvespace && cmake --preset web && cmake --build --preset web",
     "draco:web": "cd cpp/draco && cmake --preset web && cmake --build --preset web",
     "draco:pc": "cd cpp/draco && cmake --preset release && cmake --build --preset release",
     "draco:pc:app1": "cd cpp/draco/app1 && cmake --preset release && cmake --build --preset release",

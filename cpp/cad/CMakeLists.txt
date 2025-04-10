@@ -13,18 +13,18 @@ if (POLICY CMP0169)
 endif()
 
 # solvespace configuration
-include(FetchContent)
-FetchContent_Declare(
-    solvespace
-    GIT_REPOSITORY https://github.com/solvespace/solvespace.git
-    GIT_TAG v3.1
-    SOURCE_DIR ${CMAKE_SOURCE_DIR}/_deps/solvespace-src
-    BINARY_DIR ${CMAKE_SOURCE_DIR}/_deps/solvespace-build
-)
-FetchContent_GetProperties(solvespace) 
-if (NOT solvespace_POPULATED)
-    FetchContent_MakeAvailable(solvespace)
-endif()
+# include(FetchContent)
+# FetchContent_Declare(
+#     solvespace
+#     GIT_REPOSITORY https://github.com/solvespace/solvespace.git
+#     GIT_TAG v3.1
+#     SOURCE_DIR ${CMAKE_SOURCE_DIR}/_deps/solvespace-src
+#     BINARY_DIR ${CMAKE_SOURCE_DIR}/_deps/solvespace-build
+# )
+# FetchContent_GetProperties(solvespace) 
+# if (NOT solvespace_POPULATED)
+#     FetchContent_MakeAvailable(solvespace)
+# endif()
 
 # eigen configuration
 include(FetchContent)

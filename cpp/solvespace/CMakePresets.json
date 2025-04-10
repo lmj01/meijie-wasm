@@ -1,0 +1,94 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "default",
+            "generator": "Ninja",
+            "hidden": true,
+            "toolchainFile": "build/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+        },
+        {
+            "name": "windows",
+            "displayName": "Windows preset",
+            "description": "Preset for building on Windows",
+            "generator": "Visual Studio 16 2019",
+            "binaryDir": "${sourceDir}/build/windows",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/windows",
+                "DRACO_TRANSCODER_SUPPORTED": {
+                    "type": "BOOL",
+                    "value": "TRUE"
+                },
+                "DRACO_MESH_COMPRESSION_SUPPORT": {
+                    "type": "BOOL",
+                    "value": "TRUE"
+                },
+                "DRACO_JS_GLUE": {
+                    "type": "BOOL",
+                    "value": "TRUE"
+                },
+                "DRACO_GLTF_SUPPORT": {
+                    "type": "BOOL",
+                    "value": "TRUE"
+                },
+                "DRACO_GLTF_2_0_SUPPORT": {
+                    "type": "BOOL",
+                    "value": "TRUE"
+                }
+            },
+            "condition": {
+              "type": "equals",
+              "lhs": "${hostSystemName}",
+              "rhs": "Windows"
+            }
+        },
+        {
+            "name": "web",
+            "inherits": "default",
+            "displayName": "Emscripten Release",
+            "binaryDir": "build/target/web",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "debug",
+            "inherits": "windows",
+            "displayName": "Emscripten Debug",
+            "binaryDir": "build/target/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "inherits": "windows",
+            "displayName": "Emscripten Release",
+            "binaryDir": "build/target/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug",
+            "configuration": "Debug",
+            "targets": ["install"]
+        },
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "configuration": "Release",
+            "targets": ["install"]
+        },
+        {
+            "name": "web",
+            "configurePreset": "web",
+            "configuration": "Release",
+            "targets": ["install"]
+        }
+    ]
+}
