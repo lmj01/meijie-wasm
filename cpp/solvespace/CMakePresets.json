@@ -5,7 +5,26 @@
             "name": "default",
             "generator": "Ninja",
             "hidden": true,
-            "toolchainFile": "build/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+            "toolchainFile": "${sourceDir}/../build/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "ENABLE_LTO": {
+                    "type": "STRING",
+                    "value": "ON"
+                },
+                "ENABLE_TESTS": {
+                    "type": "STRING",
+                    "value": "OFF"
+                },
+                "ENABLE_CLI": {
+                    "type": "STRING",
+                    "value": "OFF"
+                },
+                "ENABLE_COVERAGE": {
+                    "type": "STRING",
+                    "value": "OFF"
+                }
+            }
         },
         {
             "name": "windows",

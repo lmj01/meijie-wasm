@@ -23,5 +23,5 @@ packages/mjdraco/index.css.map
 packages/mjdraco/src/assets/*.drc
 
 
-
+.tool-versions
 *.swp

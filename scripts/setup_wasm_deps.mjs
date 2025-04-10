@@ -41,6 +41,11 @@ async function fixEmscripten() {
     console.log(`Fixed emscripten.py`);
 }
 
+async function updateSubmoduleSolvespace() {
+    console.log('handle draco action', `${SOLVESPACE_DIR}`); 
+    await execAsync(`cd ${SOLVESPACE_DIR} && git submodule sync`);
+    await execAsync(`cd ${SOLVESPACE_DIR} && git submodule update --init -f --recursive`);
+}
 async function updateSubmoduleDraco() {
     console.log('handle draco action', `${DRACO_LIB_DIR}`); 
     await execAsync(`cd ${DRACO_LIB_DIR} && git submodule sync`);
@@ -80,7 +85,7 @@ const libs = [
         url: 'https://github.com/elalish/manifold.git',
         tag: 'v3.0.1',
         dir: MANIFOLD_DIR,
-        action: [],
+        action: [updateSubmoduleSolvespace],
         command: undefined,
     },
     {
