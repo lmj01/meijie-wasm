@@ -68,7 +68,7 @@
         },
         {
             "name": "rlinux",
-            "configurePreset": "release",
+            "configurePreset": "rlinux",
             "configuration": "Release"
         }
     ]
