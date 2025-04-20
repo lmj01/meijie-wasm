@@ -13,6 +13,7 @@
     "cad:web": "cd cpp/cad && cmake --preset web-deformation && cmake --build --preset web-deformation",
     "bgfx:web": "cd cpp/bgfx && cmake --preset web && cmake --build --preset web",
     "bgfx:pc": "cd cpp/bgfx && cmake --preset release && cmake --build --preset release",
+    "bgfx:pc:linux": "cd cpp/bgfx && cmake --preset rlinux && cmake --build --preset rlinux",
     "entt:pc": "cd cpp/entt && cmake --preset release && cmake --build --preset release",
     "ogl:pc": "cd cpp/opengl && cmake --preset release && cmake --build --preset release",
     "ogl:pc:linux": "cd cpp/opengl && cmake --preset rlinux && cmake --build --preset rlinux",
