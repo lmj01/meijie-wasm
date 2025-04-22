@@ -1,0 +1,58 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "default",
+            "generator": "Ninja",
+            "hidden": true,
+            "toolchainFile": "build/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+        },
+        {
+            "name": "windows",
+            "displayName": "Windows preset",
+            "description": "Preset for building on Windows",
+            "generator": "Visual Studio 16 2019",
+            "binaryDir": "${sourceDir}/build/windows",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/windows"
+            },
+            "condition": {
+              "type": "equals",
+              "lhs": "${hostSystemName}",
+              "rhs": "Windows"
+            }
+        },
+        {
+            "name": "winr",
+            "inherits": "windows",
+            "displayName": "windows release",
+            "binaryDir": "build/windows/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "release",
+            "inherits": "default",
+            "displayName": "Emscripten Release",
+            "binaryDir": "build/target/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "winr",
+            "configurePreset": "winr",
+            "configuration": "Release"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "configuration": "Release",
+            "targets": ["install"]
+        }
+    ]
+}

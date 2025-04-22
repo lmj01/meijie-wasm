@@ -25,3 +25,4 @@ packages/mjdraco/src/assets/*.drc
 
 .tool-versions
 *.swp
+tags
