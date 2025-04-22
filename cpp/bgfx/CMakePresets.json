@@ -22,6 +22,22 @@
               "lhs": "${hostSystemName}",
               "rhs": "Windows"
             }
+        },
+        {
+            "name": "linux",
+            "displayName": "Linux preset",
+            "description": "Preset for building on Linux",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/linux",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/linux"
+            },
+            "condition": {
+              "type": "equals",
+              "lhs": "${hostSystemName}",
+              "rhs": "Linux"
+            }
         },        
         {
             "name": "web",
@@ -49,6 +65,15 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
+        },
+        {
+            "name": "rlinux",
+            "inherits": "linux",
+            "displayName": "Linux Release",
+            "binaryDir": "${sourceDir}/build/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
     ],
     "buildPresets": [
@@ -67,6 +92,12 @@
         {
             "name": "web",
             "configurePreset": "web",
+            "configuration": "Release",
+            "targets": ["install"]
+        },
+        {
+            "name": "rlinux",
+            "configurePreset": "rlinux",
             "configuration": "Release",
             "targets": ["install"]
         }
