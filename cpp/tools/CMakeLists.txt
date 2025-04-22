@@ -42,12 +42,12 @@ if (${EMSCRIPTEN})
         -sALLOW_MEMORY_GROWTH=1
         -sENVIRONMENT="web"
         --bind
-        --emit-tsd "wasm_tri_tri.d.ts"
+        #--emit-tsd "wasm_tri_tri.d.ts"
     )
     target_include_directories (wasm_tri_tri PUBLIC include)
     install(TARGETS wasm_tri_tri DESTINATION ${CMAKE_INSTALL_PREFIX})
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/wasm_tri_tri.wasm DESTINATION ${CMAKE_INSTALL_PREFIX})
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/wasm_tri_tri.d.ts DESTINATION ${CMAKE_INSTALL_PREFIX})
+    #install(FILES ${CMAKE_CURRENT_BINARY_DIR}/wasm_tri_tri.d.ts DESTINATION ${CMAKE_INSTALL_PREFIX})
 elseif()
 endif ()
 
