@@ -18,7 +18,7 @@ inline void computeEdges(double v0[3], double v1[3], const double p0[3], const d
     v1[2] = p2[2] - p0[2];
 }
 
-void main()
+int main()
 {
     unsigned int numErrors(0), count(0);
     double p0[3], p1[3], p2[3], q0[3], q1[3], q2[3];
@@ -51,4 +51,5 @@ void main()
             ++numErrors;
         }
     }
+    return 0;
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <emscripten/bind.h>
-#include <emscripten/val.h>
+//#include <emscripten/val.h>
 
 // EMSCRIPTEN_DECLARE_VAL_TYPE(Int8Array)
 // EMSCRIPTEN_DECLARE_VAL_TYPE(Int16Array)

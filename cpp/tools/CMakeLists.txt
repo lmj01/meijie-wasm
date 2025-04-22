@@ -6,19 +6,20 @@ project (tool-wasm)
 set (CMAKE_CXX_STANDARD 17)
 # set (CMAKE_CONFIGURATION_TYPES Debug;Release)
 
-set(CMAKE_INSTALL_PREFIX "${SOURCE_ROOT_DIR}/packages/chili-wasm/lib")
-
+set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/lib")
+message(STATUS "${CMAKE_INSTALL_PREFIX}")
 # 设置头文件
 include_directories(include)
 
 # 环境变量
-set(EMSCRIPTEN "${SOURCE_ROOT_DIR}/../build/emsdk/upstream/emscripten")
+#set(EMSCRIPTEN "${SOURCE_ROOT_DIR}/../build/emsdk/upstream/emscripten")
 
 set (WasmSourcesFolder src/wasm)
 file (GLOB
     WasmSourceFiles CONFIGURE_DEPENDS
     ${WasmSourcesFolder}/*.hpp
     ${WasmSourcesFolder}/*.cpp
+    include/tri_tri_intersect.h
     src/tri_tri_intersect.c
 )
 
@@ -41,16 +42,19 @@ if (${EMSCRIPTEN})
         -sALLOW_MEMORY_GROWTH=1
         -sENVIRONMENT="web"
         --bind
-        --emit-tsd "${TARGET}.d.ts"
+        --emit-tsd "wasm_tri_tri.d.ts"
     )
     target_include_directories (wasm_tri_tri PUBLIC include)
+    install(TARGETS wasm_tri_tri DESTINATION ${CMAKE_INSTALL_PREFIX})
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/wasm_tri_tri.wasm DESTINATION ${CMAKE_INSTALL_PREFIX})
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/wasm_tri_tri.d.ts DESTINATION ${CMAKE_INSTALL_PREFIX})
+elseif()
 endif ()
 
-add_executable(appTriTri src/app_tri_tri.cpp)
-target_link_libraries(appTriTri PRIVATE tritri)
-target_include_directories (appTriTri PUBLIC include)
+
+    add_executable(appTriTri src/app_tri_tri.cpp)
+    target_link_libraries(appTriTri PRIVATE tritri)
+    target_include_directories (appTriTri PUBLIC include)
 
 
 

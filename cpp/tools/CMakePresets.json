@@ -2,10 +2,10 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "default",
+            "name": "emscripten",
             "generator": "Ninja",
             "hidden": true,
-            "toolchainFile": "build/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+            "toolchainFile": "${sourceDir}/../build/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
         },
         {
             "name": "windows",
@@ -33,10 +33,10 @@
             }
         },
         {
-            "name": "release",
-            "inherits": "default",
+            "name": "webr",
+            "inherits": "emscripten",
             "displayName": "Emscripten Release",
-            "binaryDir": "build/target/release",
+            "binaryDir": "build/web/release",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
@@ -49,8 +49,8 @@
             "configuration": "Release"
         },
         {
-            "name": "release",
-            "configurePreset": "release",
+            "name": "webr",
+            "configurePreset": "webr",
             "configuration": "Release",
             "targets": ["install"]
         }
