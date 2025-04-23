@@ -23,7 +23,7 @@ export type Point3 = {
 
 interface EmbindModule {
   add(_0: number, _1: number): number;
-  tri_tri_overlap_3d(_0: Point3, _1: Point3, _2: Point3, _3: Point3, _4: Point3, _5: Point3): number;
+  test_tri_tri_overlap_3d(_0: Point3, _1: Point3, _2: Point3, _3: Point3, _4: Point3, _5: Point3): number;
 }
 
 export type MainModule = WasmModule & typeof RuntimeExports & EmbindModule;

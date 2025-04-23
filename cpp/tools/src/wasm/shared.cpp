@@ -6,7 +6,7 @@ int add(int a, int b) {
     return a + b;
 }
 
-int tri_tri_overlap_3d(Point3 p1, Point3 e1, Point3 e2, Point3 p2, Point3 e3, Point3 e4) {
+int test_tri_tri_overlap_3d(Point3 p1, Point3 e1, Point3 e2, Point3 p2, Point3 e3, Point3 e4) {
     double dp1[3];
     double dp2[3];
     double de1[3];
@@ -48,7 +48,7 @@ EMSCRIPTEN_BINDINGS(Shared) {
     //    .class_function("from", &Point3::from);
 
     //function("tri_tri_overlap_test_3d", &tri_tri_overlap_test_3d, allow_raw_pointers());
-    function("tri_tri_overlap_3d", &tri_tri_overlap_3d, allow_raw_pointers());
-    //function("tri_tri_overlap_3d", &tri_tri_overlap_3d);
+    //function("tri_tri_overlap_3d", &tri_tri_overlap_3d, allow_raw_pointers());
+    function("test_tri_tri_overlap_3d", &test_tri_tri_overlap_3d);
     function("add", &add, return_value_policy::take_ownership());
 }

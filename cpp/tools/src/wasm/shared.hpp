@@ -13,9 +13,6 @@ struct Point3 {
         a[2] = p.z;
         return a;
     }
-    static Point3 from(double x, double y, double z) {
-        return Point3{x,y,z};
-    }
 };
 
 // EMSCRIPTEN_DECLARE_VAL_TYPE(Int8Array)
