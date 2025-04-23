@@ -17,7 +17,6 @@ cpp/bgfx/_deps
 cpp/bgfx/build
 cpp/bgfx/install
 cpp/solvespace/solvespace
-cpp/tools/lib/*.ts
 third/
 packages/mjdraco/index.css
 packages/mjdraco/index.css.map
