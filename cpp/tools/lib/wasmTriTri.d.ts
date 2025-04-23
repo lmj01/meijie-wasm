@@ -15,15 +15,17 @@ declare namespace RuntimeExports {
 interface WasmModule {
 }
 
-export type Point3 = {
-  x: number,
-  y: number,
-  z: number
-};
+export interface Point3 {
+  x: number;
+  y: number;
+  z: number;
+  delete(): void;
+}
 
 interface EmbindModule {
-  add(_0: number, _1: number): number;
+  Point3: {new(_0: number, _1: number, _2: number): Point3; from(_0: number, _1: number, _2: number): Point3};
   test_tri_tri_overlap_3d(_0: Point3, _1: Point3, _2: Point3, _3: Point3, _4: Point3, _5: Point3): number;
+  add(_0: number, _1: number): number;
 }
 
 export type MainModule = WasmModule & typeof RuntimeExports & EmbindModule;

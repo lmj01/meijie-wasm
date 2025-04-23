@@ -34,21 +34,23 @@ EMSCRIPTEN_BINDINGS(Shared) {
     // register_type<BigInt64Array>("BigInt64Array");
     // register_type<BigUint64Array>("BigUint64Array");
 
-    value_object<Point3>("Point3")
-        .field("x", &Point3::x)
-        .field("y", &Point3::y)
-        .field("z", &Point3::z)
+    //value_object<Point3>("Point3")
+    //    .field("x", &Point3::x)
+    //    .field("y", &Point3::y)
+    //    .field("z", &Point3::z)
+    class_<Point3>("Point3")
+        .constructor<double,double,double>()
+        .property("x", &Point3::x)
+        .property("y", &Point3::y)
+        .property("z", &Point3::z)
+        //.class_function("toArray", select_overload<void(const Point3&, double[3])>(&Point3::toArray))
+        //.function("toArray", select_overload<void(const Point3&, double[3])>(&Point3::toArray))
+        //.class_function("toArray", &Point3::toArray)
+        .class_function("from", &Point3::from)
     ;
 
-    //class_<Point3>("Point3")
-    //    .property("x", &Point3::x)
-    //    .property("y", &Point3::y)
-    //    .property("z", &Point3::z)
-    //    .class_function("toArray", select_overload<void(const Point3&, double[3])>(&Point3::toArray))
-    //    .class_function("from", &Point3::from);
-
     //function("tri_tri_overlap_test_3d", &tri_tri_overlap_test_3d, allow_raw_pointers());
-    //function("tri_tri_overlap_3d", &tri_tri_overlap_3d, allow_raw_pointers());
-    function("test_tri_tri_overlap_3d", &test_tri_tri_overlap_3d);
+    function("test_tri_tri_overlap_3d", &test_tri_tri_overlap_3d, allow_raw_pointers());
+    //function("test_tri_tri_overlap_3d", &test_tri_tri_overlap_3d);
     function("add", &add, return_value_policy::take_ownership());
 }

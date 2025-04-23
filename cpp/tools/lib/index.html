@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+    <head>
+        <title>wasm</title>
+    </head>
+    <body>
+        <script type="module">
+            import * as wasmTriTri from './wasmTriTri.js';
+            async function init() {
+                const module = await wasmTriTri.default();
+                const { add, Point3, test_tri_tri_overlap_3d } = module;
+                console.log(module);
+                console.log('Point3', Point3);
+                const p1 = Point3.from(-21, -72, 63);
+                console.log('add', add(3,5));
+                //const p1 = new Point3(-21, -72, 63);
+                const p2 = new Point3(-78, 99, 40);
+                console.log(p1);
+                const p3 = new Point3(-19, -78, -83);
+                const q1 = new Point3(96, 77, -51);
+                const q2 = new Point3(-95, -1, -16);
+                const q3 = new Point3(9, 5, -21);
+                const v0 = new Point3(p2.x -p1.x, p2.y-p1.y,p2.z-p1.z);
+                const v1 = new Point3(p3.x-p1.x,p3.y-p1.y,p3.z-p1.z);
+                const w0 = new Point3(q2.x-q1.x,q2.y-q1.x,q2.z-q1.z);
+                const w1 = new Point3(q3.x-q1.x, q3.y-q1.y,q3.z-q1.z);
+                const ret = test_tri_tri_overlap_3d(p1, v0, v1, q1, w0,w1);
+                console.log('intersect', ret);
+            }
+            init();
+        </script>
+    </body>
+</html>
