@@ -37,6 +37,10 @@
  */
 #include "tri_tri_intersect.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Epsilon coplanarity checks */
 
 #define USE_EPSILON_TEST false /* set to true to use coplanarity robustness checks */
@@ -765,3 +769,8 @@ int tri_tri_overlap_test_2d(double p1[2], double q1[2], double r1[2],
   else
     return ccw_tri_tri_intersection_2d(p1, q1, r1, p2, q2, r2);
 };
+
+#ifdef __cplusplus
+}
+#endif
+
