@@ -1,19 +1,19 @@
 {
-  "name": "mjdeformation",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build"
-  },
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "earcut": "^3.0.1",
-    "manifold-3d": "^3.0.1"
-  },
-  "devDependencies": {
-    "@types/earcut": "^2.1.4"
-  }
+    "name": "mjdeformation",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "earcut": "^3.0.1",
+        "manifold-3d": "^3.0.1"
+    },
+    "devDependencies": {
+        "@types/earcut": "^2.1.4"
+    }
 }

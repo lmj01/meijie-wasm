@@ -1,36 +1,36 @@
 {
-  "name": "meijie-wasm",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "build:draco": "cd cpp && cmake --preset release && cmake --build --preset release",
-    "build:entt": "cd cpp/entt && cmake --preset release && cmake --build --preset release",
-    "solvespace:web": "cd cpp/solvespace && cmake --preset web && cmake --build --preset web",
-    "draco:web": "cd cpp/draco && cmake --preset web && cmake --build --preset web",
-    "draco:pc": "cd cpp/draco && cmake --preset release && cmake --build --preset release",
-    "draco:pc:app1": "cd cpp/draco/app1 && cmake --preset release && cmake --build --preset release",
-    "cad:web": "cd cpp/cad && cmake --preset web-deformation && cmake --build --preset web-deformation",
-    "tools:web": "cd cpp/tools && cmake --preset webr && cmake --build --preset webr",
-    "tools:linux": "cd cpp/tools && cmake --preset release && cmake --build --preset release",
-    "tools:win": "cd cpp/tools && cmake --preset winr && cmake --build --preset winr",
-    "bgfx:web": "cd cpp/bgfx && cmake --preset web && cmake --build --preset web",
-    "bgfx:pc": "cd cpp/bgfx && cmake --preset release && cmake --build --preset release",
-    "bgfx:pc:linux": "cd cpp/bgfx && cmake --preset rlinux && cmake --build --preset rlinux",
-    "entt:pc": "cd cpp/entt && cmake --preset release && cmake --build --preset release",
-    "ogl:pc": "cd cpp/opengl && cmake --preset release && cmake --build --preset release",
-    "ogl:pc:linux": "cd cpp/opengl && cmake --preset rlinux && cmake --build --preset rlinux",
-    "setup:wasm": "node scripts/setup_wasm_deps.mjs",
-    "setup:third": "node scripts/setup_third.mjs"
-  },
-  "author": "",
-  "license": "ISC",
-  "workspaces": [
-    "packages/*"
-  ],
-  "devDependencies": {
-    "typescript": "^5.7.2",
-    "vite": "^6.0.3",
-    "vite-plugin-wasm": "^3.4.1"
-  }
+    "name": "meijie-wasm",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "build:draco": "cd cpp && cmake --preset release && cmake --build --preset release",
+        "build:entt": "cd cpp/entt && cmake --preset release && cmake --build --preset release",
+        "solvespace:web": "cd cpp/solvespace && cmake --preset web && cmake --build --preset web",
+        "draco:web": "cd cpp/draco && cmake --preset web && cmake --build --preset web",
+        "draco:pc": "cd cpp/draco && cmake --preset release && cmake --build --preset release",
+        "draco:pc:app1": "cd cpp/draco/app1 && cmake --preset release && cmake --build --preset release",
+        "cad:web": "cd cpp/cad && cmake --preset web-deformation && cmake --build --preset web-deformation",
+        "tools:web": "cd cpp/tools && cmake --preset webr && cmake --build --preset webr",
+        "tools:linux": "cd cpp/tools && cmake --preset release && cmake --build --preset release",
+        "tools:win": "cd cpp/tools && cmake --preset winr && cmake --build --preset winr",
+        "bgfx:web": "cd cpp/bgfx && cmake --preset web && cmake --build --preset web",
+        "bgfx:pc": "cd cpp/bgfx && cmake --preset release && cmake --build --preset release",
+        "bgfx:pc:linux": "cd cpp/bgfx && cmake --preset rlinux && cmake --build --preset rlinux",
+        "entt:pc": "cd cpp/entt && cmake --preset release && cmake --build --preset release",
+        "ogl:pc": "cd cpp/opengl && cmake --preset release && cmake --build --preset release",
+        "ogl:pc:linux": "cd cpp/opengl && cmake --preset rlinux && cmake --build --preset rlinux",
+        "setup:wasm": "node scripts/setup_wasm_deps.mjs",
+        "setup:third": "node scripts/setup_third.mjs"
+    },
+    "author": "",
+    "license": "ISC",
+    "workspaces": [
+        "packages/*"
+    ],
+    "devDependencies": {
+        "typescript": "^5.7.2",
+        "vite": "^6.0.3",
+        "vite-plugin-wasm": "^3.4.1"
+    }
 }
