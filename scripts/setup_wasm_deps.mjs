@@ -41,8 +41,13 @@ async function fixEmscripten() {
     console.log(`Fixed emscripten.py`);
 }
 
+async function updateSubmoduleManifold() {
+    console.log('handle manifold action', `${MANIFOLD_DIR}`); 
+    await execAsync(`cd ${MANIFOLD_DIR} && git submodule sync`);
+    await execAsync(`cd ${MANIFOLD_DIR} && git submodule update --init -f --recursive`);
+}
 async function updateSubmoduleSolvespace() {
-    console.log('handle draco action', `${SOLVESPACE_DIR}`); 
+    console.log('handle solvespace action', `${SOLVESPACE_DIR}`); 
     await execAsync(`cd ${SOLVESPACE_DIR} && git submodule sync`);
     await execAsync(`cd ${SOLVESPACE_DIR} && git submodule update --init -f --recursive`);
 }
@@ -85,7 +90,7 @@ const libs = [
         url: 'https://github.com/elalish/manifold.git',
         tag: 'v3.0.1',
         dir: MANIFOLD_DIR,
-        action: [updateSubmoduleSolvespace],
+        action: [updateSubmoduleManifold],
         command: undefined,
     },
     {
@@ -93,7 +98,7 @@ const libs = [
         url: 'https://github.com/solvespace/solvespace.git',
         tag: 'v3.1',
         dir: SOLVESPACE_DIR,
-        action: [],
+        action: [updateSubmoduleSolvespace],
         command: undefined,
     }
 ]
