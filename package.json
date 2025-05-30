@@ -18,6 +18,7 @@
         "bgfx:pc": "cd cpp/bgfx && cmake --preset release && cmake --build --preset release",
         "bgfx:pc:linux": "cd cpp/bgfx && cmake --preset rlinux && cmake --build --preset rlinux",
         "entt:pc": "cd cpp/entt && cmake --preset release && cmake --build --preset release",
+        "lang:win": "cd cpp/lang && cmake --preset rwin && cmake --build --preset rwin",
         "ogl:pc": "cd cpp/opengl && cmake --preset release && cmake --build --preset release",
         "ogl:pc:linux": "cd cpp/opengl && cmake --preset rlinux && cmake --build --preset rlinux",
         "setup:wasm": "node scripts/setup_wasm_deps.mjs",
