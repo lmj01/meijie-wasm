@@ -1,13 +1,15 @@
-FROM otapp:v1
+FROM ubuntu:latest
 
-RUN apk add python3
-RUN apk add nodejs
-RUN apk add npm
-RUN apk add gcc
-RUN apk add libc-dev
+RUN apt-get update
+RUN apt-get install -y python3
+RUN apt-get install -y git 
+RUN apt-get install -y cmake
+RUN apt-get install -y nodejs
+RUN apt-get install -y npm
+RUN apt-get install -y wget 
 
 RUN git clone https://github.com/emscripten-core/emsdk.git /emsdk
 WORKDIR /emsdk
-#RUN ./emsdk install latest && ./emsdk activate latest
-#ENV PATH="/emsdk:/emsdk/upstream/emscripten:${PATH}"
+RUN ./emsdk install latest && ./emsdk activate latest
+ENV PATH="/emsdk:/emsdk/upstream/emscripten:/emsdk/upstream/bin:${PATH}"
 
