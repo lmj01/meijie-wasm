@@ -2,11 +2,16 @@ import '@kitware/vtk.js/Rendering/Profiles/Geometry';
 
 import vtkFullScreenRenderWindow from '@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow';
 
+import vtkPoints from '@kitware/vtk.js/Common/Core/Points';
+import vtkPolyData from '@kitware/vtk.js/Common/DataModel/PolyData';
+import vtkCellArray from '@kitware/vtk.js/Common/Core/CellArray';
+
 import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
 import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
 import vtkAxesActor from '@kitware/vtk.js/Rendering/Core/AxesActor';
 import vtkRenderWindowInteractor from '@kitware/vtk.js/Rendering/Core/RenderWindowInteractor';
 import vtkCalculator from '@kitware/vtk.js/Filters/General/Calculator';
+import vtkTubeFilter from '@kitware/vtk.js/Filters/General/TubeFilter';
 import vtkConeSource from '@kitware/vtk.js/Filters/Sources/ConeSource';
 import { AttributeTypes } from '@kitware/vtk.js/Common/DataModel/DataSetAttributes/Constants';
 import { FieldDataTypes } from '@kitware/vtk.js/Common/DataModel/DataSet/Constants';
@@ -84,6 +89,47 @@ const interactor = vtkRenderWindowInteractor.newInstance();
 interactor.setRenderWindow(renderWindow);
 const axesActor = vtkAxesActor.newInstance();
 renderer.addActor(axesActor);
+
+/////////start tube example
+/**
+ *
+ */
+const tmpPoints = new Float32Array([
+    0,0,0,
+    1,1,1,
+    2,1,0,
+    3,2,1,
+    4,0,0,
+    5,1,-1,
+    6,2,0
+]);
+const points1 = vtkPoints.newInstance();
+points1.setData(tmpPoints);
+const polydata1 = vtkPolyData.newInstance();
+polydata1.setPoints(points1);
+const line1 = vtkCellArray.newInstance();
+const lineIdx = new Uint32Array(tmpPoints.length / 3 + 1);
+lineIdx[0] = tmpPoints.length / 3;
+for (let i = 0; i < tmpPoints.length/3; i++) {
+    lineIdx[i + 1] = i;
+}
+line1.setData(lineIdx);
+polydata1.setLines(line1);
+
+const tubeFilter1 = vtkTubeFilter.newInstance();
+console.log(tubeFilter1);
+tubeFilter1.setInputData(polydata1);
+tubeFilter1.setRadius(0.2);
+tubeFilter1.setNumberOfSides(20);
+tubeFilter1.update();
+
+const mapper1 = vtkMapper.newInstance();
+mapper1.setInputConnection(tubeFilter1.getOutputPort());
+const actor1 = vtkActor.newInstance();
+actor1.setMapper(mapper1);
+
+renderer.addActor(actor1);
+/////////end
 
 renderer.addActor(actor);
 renderer.resetCamera();
