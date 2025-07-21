@@ -12,5 +12,7 @@ set(SOURCES
     main.c
 )
 
+set(SRCAPP2 quad.c)
 # Add the executable target
 add_executable(cApp1 ${SOURCES})
+add_executable(cApp2 ${SRCAPP2})

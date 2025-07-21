@@ -85,8 +85,7 @@ private:
   std::vector<std::unique_ptr<Module>> modules_;
 };
 
-int main()
-{
+int main() {
   Server server;
   server.addModule(std::make_unique<ModuleA>());
   server.addModule(std::make_unique<ModuleB>());

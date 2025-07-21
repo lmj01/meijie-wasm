@@ -1,0 +1,3 @@
+[submodule "cpp/otapp"]
+	path = cpp/otapp
+	url = git@github.com:lmj01/example-crud
