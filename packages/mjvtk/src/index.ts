@@ -15,6 +15,11 @@ import vtkTubeFilter from '@kitware/vtk.js/Filters/General/TubeFilter';
 import vtkConeSource from '@kitware/vtk.js/Filters/Sources/ConeSource';
 import { AttributeTypes } from '@kitware/vtk.js/Common/DataModel/DataSetAttributes/Constants';
 import { FieldDataTypes } from '@kitware/vtk.js/Common/DataModel/DataSet/Constants';
+import vtkWidgetManager from '@kitware/vtk.js/Widgets/Core/WidgetManager';
+import { 
+    createInteractiveOrientationMarkerWidget,
+    alignCameraOnViewWidgetOrientationChange,
+} from '@kitware/vtk.js/Widgets/Widgets3D/InteractiveOrientationWidget/helpers';
 
 const controlPanel = `
 <table>
@@ -131,8 +136,18 @@ actor1.setMapper(mapper1);
 renderer.addActor(actor1);
 /////////end
 
+////////////////////add widget 
+const widgetManager = vtkWidgetManager.newInstance();
+const {
+    interactiveOrientationWidget, orientationMarkerWidget
+} = createInteractiveOrientationMarkerWidget( widgetManager, renderWindow.getInteractor(), renderer);
+const vm = widgetManager.addWidget(interactiveOrientationWidget);
+const subscription = alignCameraOnViewWidgetOrientationChange(vm, renderer.getActiveCamera(), orientationMarkerWidget, widgetManager, renderWindow.render);
+//////////////////////
+
 renderer.addActor(actor);
 renderer.resetCamera();
+widgetManager.enablePicking();
 renderWindow.render();
 interactor.initialize();
 interactor.start();
@@ -151,34 +166,35 @@ representationSelector?.addEventListener('change', (e) => {
   renderWindow.render();
 });
 viewDirSelector?.addEventListener('change', (e) => {
-  const strDir = e.target?.value;
-  const maxSide = 50;
-  activeCamera.setFocalPoint(0, 0, 0);
-  activeCamera.setViewUp(0, 1, 0);
-  switch (strDir) {
-    case 'front':      
-      activeCamera.setPosition(0, 0, maxSide);
-      break;
-    case 'back':
-      activeCamera.setPosition(0, 0, -maxSide);
-      break;
-    case 'right':
-      activeCamera.setPosition(maxSide, 0, 0);
-      break;
-    case 'left':
-      activeCamera.setPosition(-maxSide, 0, 0);
-      break;
-    case 'top':
-      activeCamera.setPosition(0, maxSide, 0);
-      break;
-    case 'bottom':
-      activeCamera.setPosition(0, -maxSide, 0);
-      break;
-    default: throw new Error(`un-support type ${strDir}`);
-  }
-  console.log(strDir);
-  renderer.resetCamera();
-  renderWindow.render();
+    const strDir = e.target?.value;
+    const maxSide = 50;
+    activeCamera.setFocalPoint(0, 0, 0);
+    activeCamera.setViewUp(0, 1, 0);
+    switch (strDir) {
+        case 'front':      
+          activeCamera.setPosition(0, 0, maxSide);
+          break;
+        case 'back':
+          activeCamera.setPosition(0, 0, -maxSide);
+          break;
+        case 'right':
+          activeCamera.setPosition(maxSide, 0, 0);
+          break;
+        case 'left':
+          activeCamera.setPosition(-maxSide, 0, 0);
+          break;
+        case 'top':
+          activeCamera.setPosition(0, maxSide, 0);
+          break;
+        case 'bottom':
+          activeCamera.setPosition(0, -maxSide, 0);
+          break;
+        default: throw new Error(`un-support type ${strDir}`);
+    }
+    console.log(strDir);
+    renderer.resetCamera();
+    widgetManager.enablePicking();
+    renderWindow.render();
 });
 resolutionChange?.addEventListener('input', (e) => {
   const resolution = Number(e.target?.value);

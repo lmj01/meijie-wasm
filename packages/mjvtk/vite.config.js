@@ -3,6 +3,7 @@ import path from 'path'
 
 const rollupOptionsInput = {
     index: path.resolve(__dirname, 'index.html'),    
+    reslice: path.resolve(__dirname, 'reslice.html'),    
 }
   
 export default defineConfig({

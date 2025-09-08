@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@kitware/vtk.js": "^32.9.0"
+    "@kitware/vtk.js": "^32.9.0",
+    "nifti-reader-js": "^0.8.0"
   }
 }
