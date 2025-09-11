@@ -34,7 +34,7 @@ import vtkCPRManipulator from '@kitware/vtk.js/Widgets/Manipulators/CPRManipulat
 import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
 import { CaptureOn } from '@kitware/vtk.js/Widgets/Core/WidgetManager/Constants';
 
-import { vec3 } from 'gl-matrix';
+import { vec3, mat3, mat4 } from 'gl-matrix';
 import { SlabMode } from '@kitware/vtk.js/Imaging/Core/ImageReslice/Constants';
 import { stlBuffer2Reader } from '../utils';
 import { infoObb, getInfoAxes } from '../vtkHelper.js';
@@ -440,68 +440,108 @@ function setCenterlineData(centerPoints:Float32Array) {
     widget.setManipulator(cprManipulator);
     viewPanoramic.renderWindow.render();
 }
+function qformToMatrix(hdr) {
+    const b = hdr.quatern_b;
+    const c = hdr.quatern_c;
+    const d = hdr.quatern_d;
+    const a = Math.sqrt(1 - (b*b + c*c + d*d));
 
+    const dx = hdr.pixDims[1];
+    const dy = hdr.pixDims[2];
+    const dz = hdr.pixDims[3];
+
+    const R = mat4.create();
+    R[0] = a*a + b*b - c*c - d*d;
+    R[1] = 2*(b*c - a*d);
+    R[2] = 2*(b*d + a*c);
+
+    R[4] = 2*(b*c + a*d);
+    R[5] = a*a - b*b + c*c - d*d;
+    R[6] = 2*(c*d - a*b);
+
+    R[8] = 2*(b*d - a*c);
+    R[9] = 2*(c*d + a*b);
+    R[10] = a*a - b*b - c*c + d*d;
+    R[15] = 1.0;
+
+    const M = mat4.create();
+    mat4.scale(M, M, [dx, dy, dz]);
+    mat4.multiply(M, R, M);
+    mat4.translate(M, M, [hdr.qoffset_x, hdr.qoffset_y, hdr.qoffset_z]);
+    return M;
+}
 function parseNiiData(data:ArrayBuffer) {
+    window.nifti = nifti;
     console.log(data.byteLength);
     const isNifti = nifti.isNIFTI(data);
     if (!isNifti) {
         console.error('is not nii data');
         return;
     }
+    console.log('isCompressed', nifti.isCompressed(data))
     console.log('isNIFTI1', nifti.isNIFTI1(data))
     console.log('isNIFTI2', nifti.isNIFTI2(data))
     const meta = {};
-    const niftiHeader = nifti.readHeader(data);
-    console.log('nii header', niftiHeader, niftiHeader.toFormattedString());
-    const niiImage = nifti.readImage(niftiHeader, data.slice(niftiHeader.vox_offset));
+    meta.header = nifti.readHeader(data);
+    console.log('niiHeader', meta.header.toFormattedString());
+    const niiImage = nifti.readImage(meta.header, data);
+    window.niiImg = niiImage;
+    console.log(niiImage);
     console.log('offset', data.byteLength - niiImage.byteLength);
-    if (nifti.hasExtension(niftiHeader)) {
-        const niftiExt = nifti.readExtensionData(niftiHeader, data);
+    if (nifti.hasExtension(meta.header)) {
+        const niftiExt = nifti.readExtensionData(meta.header, data);
         console.log('nii ext', niftiExt);
     }
-    meta.dims = niftiHeader.dims.slice(1,4);
-    meta.spacing = niftiHeader.pixDims.slice(1,4);
+    meta.dims = meta.header.dims.slice(1,4);
+    meta.spacing = meta.header.pixDims.slice(1,4);
     meta.origin = [
-        niftiHeader.qoffset_x || 0,
-        niftiHeader.qoffset_y || 0,
-        niftiHeader.qoffset_z || 0
+        meta.header.qoffset_x || 0,
+        meta.header.qoffset_y || 0,
+        meta.header.qoffset_z || 0
     ];
-    meta.origin = [0, 0, 0];
+    //meta.origin = [0, 0, 0];
     console.log(meta, niiImage);
     
-    const dataType = niftiHeader.datatypeCode;
+
+    let M = mat4.create();
+    // sform 
+    if (meta.header.sform_code > 0) {
+        for (let i = 0; i < 16; i++) M[Math.floor(i/4)*4 + i % 4] = meta.header.affine[i];
+    } else if (meta.header.qform_code > 0) {
+        M = qformToMatrix(meta.header);
+    } else {
+        mat4.scale(M, M, meta.spacing);
+        mat4.translate(M, M, [meta.header.qoffset_x, meta.header.qoffset_y, meta.header.qoffset_z]);
+    }
+
+    const dir = new Float32Array(9);
+    for (let i = 0; i < 3; i++) { 
+        for (let j = 0; j < 3; j++) { 
+            dir[i * 3 + j] = M[i * 4 + j];
+        }
+    }
+    const origin = [M[12],M[13],M[14]];
+    const nVox = meta.dims[0] * meta.dims[1] * meta.dims[2];
 
     const imageData = vtkImageData.newInstance();
-    imageData.setDimensions(meta.dims[0], meta.dims[1], meta.dims[2]);
-    imageData.setSpacing(meta.spacing[0], meta.spacing[1], meta.spacing[2]);
-    imageData.setOrigin(meta.origin[0], meta.origin[1], meta.origin[2]);
-    let dir;
-    if (1) {
-        dir = new Float32Array([
-            1, 0, 0,
-            0, -1, 0,
-            0, 0, 1
-        ]);
-    }
-    imageData.setDirection(dir);
 
     let scalarArray;
-    switch(dataType) {
+    switch(meta.header.datatypeCode) {
         case nifti.NIFTI1.TYPE_INT16:
             console.log('Int16Array');
-            scalarArray = new Int16Array(data);
+            scalarArray = new Int16Array(niiImage);
             break;
         case nifti.NIFTI1.TYPE_INT32:
             console.log('Int32Array');
-            scalarArray = new Int32Array(data);
+            scalarArray = new Int32Array(niiImage);
             break;
         case nifti.NIFTI1.TYPE_FLOAT32:
             console.log('Float32Array');
-            scalarArray = new Float32Array(data);
+            scalarArray = new Float32Array(niiImage);
             break;
         case nifti.NIFTI1.TYPE_UINT8:
             console.log('Uint8Array');
-            scalarArray = new Uint8Array(data);
+            scalarArray = new Uint8Array(niiImage);
             break;
         default:
             console.warn('no support handle type, try UInt16Array', dataType);
@@ -515,6 +555,11 @@ function parseNiiData(data:ArrayBuffer) {
         numberOfComponents: 1,
     });
     imageData.getPointData().setScalars(scalars);
+    window.imgData = imageData;
+    imageData.setDimensions(meta.dims[0], meta.dims[1], meta.dims[2]);
+    imageData.setSpacing(meta.spacing[0], meta.spacing[1], meta.spacing[2]);
+    imageData.setOrigin(meta.origin[0], meta.origin[1], meta.origin[2]);
+    //imageData.setDirection(dir);
     
     return imageData;
 }
