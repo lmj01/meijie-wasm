@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "@kitware/vtk.js": "^32.9.0",
-    "nifti-reader-js": "^0.8.0"
+    "nifti-reader-js": "^0.8.0",
+    "pako": "^2.0.4"
   }
 }

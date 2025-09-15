@@ -6,6 +6,8 @@ import '@kitware/vtk.js/Rendering/Profiles/All';
 import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
 import vtkAnnotatedCubeActor from '@kitware/vtk.js/Rendering/Core/AnnotatedCubeActor';
 import vtkDataArray from '@kitware/vtk.js/Common/Core/DataArray';
+import vtkPoints from '@kitware/vtk.js/Common/Core/Points';
+import vtkCellArray from '@kitware/vtk.js/Common/Core/CellArray';
 import vtkHttpDataSetReader from '@kitware/vtk.js/IO/Core/HttpDataSetReader';
 import vtkGenericRenderWindow from '@kitware/vtk.js/Rendering/Misc/GenericRenderWindow';
 import vtkImageData from '@kitware/vtk.js/Common/DataModel/ImageData';
@@ -36,8 +38,9 @@ import { CaptureOn } from '@kitware/vtk.js/Widgets/Core/WidgetManager/Constants'
 
 import { vec3, mat3, mat4 } from 'gl-matrix';
 import { SlabMode } from '@kitware/vtk.js/Imaging/Core/ImageReslice/Constants';
-import { stlBuffer2Reader } from '../utils';
+import { stlBuffer2Reader, handleGzFile } from '../utils';
 import { infoObb, getInfoAxes } from '../vtkHelper.js';
+import { generateUniformCurve } from '../mathHelper.js';
 
 import {
     xyzToViewType,
@@ -214,11 +217,11 @@ for (let i = 0; i < 6; i++) {
         viewAttributes.push(obj);
     } else if (i == 4) {
         viewPanoramic = obj;
-        window.vp = obj;
+        window.viewerPanoramic = obj;
         continue;
     } else if (i == 5) {
         viewVolume = obj;
-        window.vol = obj;
+        window.viewerVolume = obj;
         continue;
     } else {
         view3D = obj;
@@ -465,14 +468,11 @@ function qformToMatrix(hdr) {
     R[15] = 1.0;
 
     const M = mat4.create();
-    mat4.scale(M, M, [dx, dy, dz]);
     mat4.multiply(M, R, M);
     mat4.translate(M, M, [hdr.qoffset_x, hdr.qoffset_y, hdr.qoffset_z]);
     return M;
 }
 function parseNiiData(data:ArrayBuffer) {
-    window.nifti = nifti;
-    console.log(data.byteLength);
     const isNifti = nifti.isNIFTI(data);
     if (!isNifti) {
         console.error('is not nii data');
@@ -483,11 +483,8 @@ function parseNiiData(data:ArrayBuffer) {
     console.log('isNIFTI2', nifti.isNIFTI2(data))
     const meta = {};
     meta.header = nifti.readHeader(data);
-    console.log('niiHeader', meta.header.toFormattedString());
     const niiImage = nifti.readImage(meta.header, data);
     window.niiImg = niiImage;
-    console.log(niiImage);
-    console.log('offset', data.byteLength - niiImage.byteLength);
     if (nifti.hasExtension(meta.header)) {
         const niftiExt = nifti.readExtensionData(meta.header, data);
         console.log('nii ext', niftiExt);
@@ -499,17 +496,19 @@ function parseNiiData(data:ArrayBuffer) {
         meta.header.qoffset_y || 0,
         meta.header.qoffset_z || 0
     ];
-    //meta.origin = [0, 0, 0];
     console.log(meta, niiImage);
     
 
     let M = mat4.create();
     // sform 
     if (meta.header.sform_code > 0) {
+        console.log('use sform', meta.header.sform_code);
         for (let i = 0; i < 16; i++) M[Math.floor(i/4)*4 + i % 4] = meta.header.affine[i];
     } else if (meta.header.qform_code > 0) {
+        console.log('use qform', meta.header.qform_code);
         M = qformToMatrix(meta.header);
     } else {
+        console.log('use default');
         mat4.scale(M, M, meta.spacing);
         mat4.translate(M, M, [meta.header.qoffset_x, meta.header.qoffset_y, meta.header.qoffset_z]);
     }
@@ -521,9 +520,7 @@ function parseNiiData(data:ArrayBuffer) {
         }
     }
     const origin = [M[12],M[13],M[14]];
-    const nVox = meta.dims[0] * meta.dims[1] * meta.dims[2];
-
-    const imageData = vtkImageData.newInstance();
+    console.log(M, dir, origin);
 
     let scalarArray;
     switch(meta.header.datatypeCode) {
@@ -551,31 +548,99 @@ function parseNiiData(data:ArrayBuffer) {
     const scalars = vtkDataArray.newInstance({
         name:'Scalars',
         values: scalarArray,
-        //values: niiImage,
         numberOfComponents: 1,
     });
+    const imageData = vtkImageData.newInstance();
+    imageData.setDimensions(...meta.dims);
+    imageData.setSpacing(...meta.spacing);
+    imageData.setOrigin(...meta.origin);
+    imageData.setDirection(dir);
     imageData.getPointData().setScalars(scalars);
-    window.imgData = imageData;
-    imageData.setDimensions(meta.dims[0], meta.dims[1], meta.dims[2]);
-    imageData.setSpacing(meta.spacing[0], meta.spacing[1], meta.spacing[2]);
-    imageData.setOrigin(meta.origin[0], meta.origin[1], meta.origin[2]);
-    //imageData.setDirection(dir);
     
     return imageData;
 }
-const cUrl = './CBCT_org.nii';
-//const cUrl = './CBCT2.nii.gz';
-fetch(cUrl).then(res=>res.arrayBuffer()).then(async(data) => {
-    
-    const archcurve = await fetch('./archcurve.asc').then(res=>res.text());
-    const inPoints = archcurve.split('\n').map(e=>e.split(' ').map(e=>parseFloat(e)));
-    const tmpPoints = new Float32Array(inPoints.length * 3);
-    let idx = 0;
-    inPoints.forEach((pt)=>{
-        tmpPoints[idx++] = pt[0];
-        tmpPoints[idx++] = pt[1];
-        tmpPoints[idx++] = pt[2];
+const mapData = {
+    615: {
+        //nii: './615.nii.gz',
+        nii: './615a.nii.gz',
+        //nii: './CBCT_org.nii.gz',
+        asc: './archcurve615.asc',
+    },
+    test: {
+        nii: './CBCT_org.nii',
+        asc: 'archcurve.asc',
+    },
+    ct2: {
+        nii: './ct2.nii.gz',
+        asc: 'archcurvect2.asc',
+    },
+}
+const idxMap = '615';
+if (false) {
+    new Promise(async(resolve)=>{
+        const url = mapData[idxMap].nii;
+        if (url.endsWith('nii.gz')) {
+            const buffer = await fetch(url).then(res=>res.arrayBuffer());
+            resolve(handleGzFile(buffer));
+        } else {
+            resolve(url);
+        }
+    }).then(async (bufferOrUrl) =>{
+        let data = null;
+        if (bufferOrUrl instanceof ArrayBuffer) {
+            data = bufferOrUrl;
+        } else if (typeof(bufferOrUrl) == 'string') {
+            data = await fetch(bufferOrUrl).then(res=>res.arrayBuffer());
+        }
+        if (!data) {
+            console.error('not load nii data');
+            return;
+        } else {
+            handleNiiData(data);
+        }
+            
+        const archcurve = await fetch(mapData[idxMap].asc).then(res=>res.text());
+        const inPoints = archcurve.split('\n').filter(e=>e).map(e=>e.split(' ').map(e=>parseFloat(e)));
+        let archPointData = [];
+        let idx = 0;
+        inPoints.forEach((pt)=>{
+            archPointData.push([pt[0], pt[1], pt[2]]);
+        });
+        archPointData = generateUniformCurve(archPointData, 800);
+        handleArchData(archPointData);
     });
+}
+function handleArchData(data) {
+
+    // 创建线条几何体
+    const points = vtkPoints.newInstance()
+    const lines = vtkCellArray.newInstance()
+    // 添加曲线点
+    data.forEach((pt, index) => {
+        points.insertNextPoint(pt[0], pt[1], pt[2]);
+        if (index > 0) {
+            lines.insertNextCell([index - 1, index])
+        }
+    })
+    // 创建polyData
+    const polyData = vtkPolyData.newInstance()
+    polyData.setPoints(points)
+    polyData.setLines(lines)
+    // 创建映射器和actor
+    const mapper = vtkMapper.newInstance()
+    mapper.setInputData(polyData)
+
+    const actorArch = vtkActor.newInstance()
+    actorArch.setMapper(mapper)
+    actorArch.getProperty().setColor(1, 1, 0) // 黄色，便于观察
+    actorArch.getProperty().setLineWidth(3);
+    actorArch.setUserMatrix(viewAttributes[2].resliceActor.getUserMatrix());
+    viewPanoramic.renderer.addActor(actorArch);
+    viewPanoramic.renderWindow.render();
+    viewVolume.renderer.addActor(actorArch);
+    viewVolume.renderWindow.render();
+}
+function handleNiiData(data:ArrayBuffer) {
     const image = parseNiiData(data); 
 
     widget.setImage(image);
@@ -614,9 +679,13 @@ fetch(cUrl).then(res=>res.arrayBuffer()).then(async(data) => {
     viewVolume.renderer.addVolume(actor3d);
     getInfoAxes().forEach(v=>{ 
         viewVolume.renderer.addActor(v.actor);
+        viewPanoramic.renderer.addActor(v.actor);
     });
     viewVolume.renderer.resetCamera();
     viewVolume.renderWindow.render();
+    viewPanoramic.renderer.resetCamera();
+    viewPanoramic.renderWindow.render();
+
 
     // Create image outline in 3D view
     const outline = vtkOutlineFilter.newInstance();
@@ -705,7 +774,7 @@ fetch(cUrl).then(res=>res.arrayBuffer()).then(async(data) => {
     view3D.renderWindow.render();
     
 
-    setCenterlineData(tmpPoints);
+    //setCenterlineData(archPointData);
 
     //viewPanoramic.renderer.resetCamera();
     //viewPanoramic.renderer.resetCameraClippingRange();
@@ -749,7 +818,7 @@ fetch(cUrl).then(res=>res.arrayBuffer()).then(async(data) => {
 
         oneImplantForAxes(reader, actorImplant, obb);
     });
-});
+}
 
 function oneImplantForAxes(reader, actor, obb) {
     const tmp = { actor, obb, actors: [] };
@@ -925,3 +994,29 @@ checkboxWindowLevel.addEventListener('change', (ev) => {
   });
 });
 
+const inputNiiFile = document.getElementById('inputNiiFile');
+inputNiiFile.addEventListener('change', async (ev) => {
+    const file = ev.target.files[0];
+    console.log(file, file.type);
+    const arrayBuffer = await file.arrayBuffer();
+    if (file.type.endsWith('gzip')) {
+        handleNiiData(handleGzFile(arrayBuffer));
+    } else if (file.type.endsWith('zip')) {
+        handleNiiData(handleGzFile(arrayBuffer, false));
+    } else {
+        handleNiiData(arrayBuffer); 
+    }
+});
+const inputArchCurveFile = document.getElementById('inputArchCurveFile');
+inputArchCurveFile.addEventListener('change', async(ev) => {
+    const file = ev.target.files[0];
+    const archcurve = await file.text();
+    const inPoints = archcurve.split('\n').filter(e=>e).map(e=>e.split(' ').map(e=>parseFloat(e)));
+    let archPointData = [];
+    let idx = 0;
+    inPoints.forEach((pt)=>{
+        archPointData.push([pt[0], pt[1], pt[2]]);
+    });
+    archPointData = generateUniformCurve(archPointData, 800);
+    handleArchData(archPointData);
+});
