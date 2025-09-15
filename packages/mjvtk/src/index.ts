@@ -93,6 +93,7 @@ actor.setMapper(mapper);
 const interactor = vtkRenderWindowInteractor.newInstance();
 interactor.setRenderWindow(renderWindow);
 const axesActor = vtkAxesActor.newInstance();
+axesActor.setUserMatrix([1,0,0,0, 0,1,0,0, 0,0,1,0, 0, 0, 0, 1]);
 renderer.addActor(axesActor);
 
 /////////start tube example

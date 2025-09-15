@@ -13,12 +13,14 @@ import vtkGenericRenderWindow from '@kitware/vtk.js/Rendering/Misc/GenericRender
 import vtkImageData from '@kitware/vtk.js/Common/DataModel/ImageData';
 import vtkPolyData from '@kitware/vtk.js/Common/DataModel/PolyData';
 import vtkPlane from '@kitware/vtk.js/Common/DataModel/Plane';
+import vtkLineSource from '@kitware/vtk.js/Filters/Sources/LineSource.js'
 import vtkMatrixBuilder from '@kitware/vtk.js/Common/Core/MatrixBuilder';
 import vtkPiecewiseFunction from '@kitware/vtk.js/Common/DataModel/PiecewiseFunction'
 import vtkImageMapper from '@kitware/vtk.js/Rendering/Core/ImageMapper';
 import vtkImageCPRMapper from '@kitware/vtk.js/Rendering/Core/ImageCPRMapper';
 import vtkImageReslice from '@kitware/vtk.js/Imaging/Core/ImageReslice';
 import vtkImageSlice from '@kitware/vtk.js/Rendering/Core/ImageSlice';
+import vtkAxesActor from '@kitware/vtk.js/Rendering/Core/AxesActor';
 import vtkVolume from '@kitware/vtk.js/Rendering/Core/Volume';
 import vtkVolumeMapper from '@kitware/vtk.js/Rendering/Core/VolumeMapper';
 import vtkColorTransferFunction from '@kitware/vtk.js/Rendering/Core/ColorTransferFunction'
@@ -39,8 +41,8 @@ import { CaptureOn } from '@kitware/vtk.js/Widgets/Core/WidgetManager/Constants'
 import { vec3, mat3, mat4 } from 'gl-matrix';
 import { SlabMode } from '@kitware/vtk.js/Imaging/Core/ImageReslice/Constants';
 import { stlBuffer2Reader, handleGzFile } from '../utils';
-import { infoObb, getInfoAxes } from '../vtkHelper.js';
-import { generateUniformCurve } from '../mathHelper.js';
+import { infoObb, getInfoAxes, vec3ApplyMatrix4 } from '../vtkHelper.js';
+import { generateUniformCurve, cross, normalize } from '../mathHelper.js';
 
 import {
     xyzToViewType,
@@ -63,6 +65,7 @@ const viewColors = [
     [1, 0, 0], // sagittal
     [0, 1, 0], // coronal
     [0, 0, 1], // axial
+    [0.1, 0.1, 0.5], // sagittal with arch 
     [0.5, 0.5, 0], // 3D 
     [0.5, 0.5, 0.5], // panoramic
     [0.5, 0.1, 0.5], // volume
@@ -79,7 +82,10 @@ widgetState
     .forEach((handle) => handle.setScale1(4));
 const showDebugActors = true;
 const implantList = [];
-
+const gInfo = {
+    archPointData: [],
+};
+window.gInfo = gInfo;
 const appCursorStyles = {
     translateCenter: 'move',
     rotateLine: 'alias',
@@ -90,7 +96,7 @@ const appCursorStyles = {
 // ----------------------------------------------------------------------------
 // Define html structure
 // ----------------------------------------------------------------------------
-document.body.style='display:flex;flex-wrap:wrap;width:100vw;height:100vh;margin:0;overflow:hidden;justify-content:space-evenly;';
+document.body.style='display:flex;flex-wrap:wrap;width:100vw;height:100vh;margin:0;overflow:hidden auto;justify-content:space-evenly;';
 const container = document.querySelector('body');
 const controlContainer = document.createElement('div');
 controlContainer.innerHTML = `${controlPanel}`;
@@ -119,10 +125,11 @@ const initialPlanesState = { ...widgetState.getPlanes() };
 let view3D = null;
 let viewPanoramic = null;
 let viewVolume = null;
-for (let i = 0; i < 6; i++) {
+let viewSagittal = null;
+for (let i = 0; i < viewColors.length; i++) {
     const elementParent = document.createElement('div');
     elementParent.setAttribute('class', 'view');
-    elementParent.style = 'width:300px;height:300px;display:flex;flex-direction:column;margin:auto;';
+    elementParent.style = 'width:300px;height:300px;display:flex;flex-direction:column;margin:20px 0px;';
 
     const element = document.createElement('div');
     element.setAttribute('class', 'view');
@@ -174,10 +181,8 @@ for (let i = 0; i < 6; i++) {
         obj.widgetManager.enablePicking();
         // Use to update all renderers buffer when actors are moved
         obj.widgetManager.setCaptureOn(CaptureOn.MOUSE_MOVE);
-    } else if (i == 4) {
-        obj.interactor.setInteractorStyle(
-            vtkInteractorStyleTrackballCamera.newInstance()
-        );
+    } else if (i == 3) {
+        obj.interactor.setInteractorStyle(vtkInteractorStyleImage.newInstance());
     } else {
         obj.interactor.setInteractorStyle(
             vtkInteractorStyleTrackballCamera.newInstance()
@@ -199,27 +204,33 @@ for (let i = 0; i < 6; i++) {
 
     // Create sphere for each 2D views which will be displayed in 3D
     // Define origin, point1 and point2 of the plane used to reslice the volume
-    for (let j = 0; j < 3; j++) {
-        const sphere = vtkSphereSource.newInstance();
-        // 辅组球体的半径
-        sphere.setRadius(3);
-        const mapper = vtkMapper.newInstance();
-        mapper.setInputConnection(sphere.getOutputPort());
-        const actor = vtkActor.newInstance();
-        actor.setMapper(mapper);
-        actor.getProperty().setColor(...viewColors[i]);
-        actor.setVisibility(showDebugActors);
-        obj.sphereActors.push(actor);
-        obj.sphereSources.push(sphere);
+    if (![4,5,6].includes(i)) {
+        for (let j = 0; j < 3; j++) {
+            const sphere = vtkSphereSource.newInstance();
+            // 辅组球体的半径
+            sphere.setRadius(3);
+            const mapper = vtkMapper.newInstance();
+            mapper.setInputConnection(sphere.getOutputPort());
+            const actor = vtkActor.newInstance();
+            actor.setMapper(mapper);
+            actor.getProperty().setColor(...viewColors[i]);
+            actor.setVisibility(showDebugActors);
+            obj.sphereActors.push(actor);
+            obj.sphereSources.push(sphere);
+        }
     }
 
     if (i < 3) {
         viewAttributes.push(obj);
-    } else if (i == 4) {
+    } else if (i == 3) {
+        viewSagittal = obj;
+        window.viewerSagittal = obj;
+        viewSagittal.reslice.setAutoCropOutput(true);
+    } else if (i == 5) {
         viewPanoramic = obj;
         window.viewerPanoramic = obj;
         continue;
-    } else if (i == 5) {
+    } else if (i == 6) {
         viewVolume = obj;
         window.viewerVolume = obj;
         continue;
@@ -318,7 +329,235 @@ for (let i = 0; i < 6; i++) {
             });
             updateCutter(i);
         });
+    } else if (i == 3) {
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.min = 0;
+        slider.max = 200;
+        slider.style.bottom = '0px';
+        slider.style.width = '100%';
+        elementParent.appendChild(slider);
+        obj.slider = slider;
+
+        slider.addEventListener('input', (ev) => {
+            updateArchSagittal(Number(ev.target.value));
+        });
     }
+}
+if (true) {
+    viewSagittal.renderer.addActor(viewSagittal.resliceActor);
+    view3D.renderer.addActor(viewSagittal.resliceActor);
+    viewVolume.renderer.addActor(viewSagittal.resliceActor);
+    viewPanoramic.renderer.addActor(viewSagittal.resliceActor);
+    viewSagittal.reslice.setOutputDimensionality(2);
+    //viewSagittal.reslice.setOutputScalarType('Uint16Array');
+    //viewSagittal.reslice.setScalarScale(65535 / 255);
+    //
+    //const axes = mat4.create();
+    //mat4.rotateX(axes, axes, 45 * Math.PI/ 180);
+    //viewSagittal.reslice.setResliceAxes(axes);
+
+    gInfo.axes = vtkAxesActor.newInstance();
+    const scaleFactor = 90;
+    gInfo.axes.setScale(scaleFactor, scaleFactor, scaleFactor);
+    viewVolume.renderer.addActor(gInfo.axes);
+    viewPanoramic.renderer.addActor(gInfo.axes);
+    view3D.renderer.addActor(gInfo.axes);
+}
+function addSagittalNormalAndTangent() {
+    // 创建切线边框（蓝色）
+    const tangentLineSource = vtkLineSource.newInstance()
+    const tangentMapper = vtkMapper.newInstance()
+    tangentMapper.setInputConnection(tangentLineSource.getOutputPort())
+    gInfo.sagittalTangent = vtkActor.newInstance()
+    gInfo.sagittalTangent.setMapper(tangentMapper)
+    gInfo.sagittalTangent.getProperty().setColor(0, 0, 1) // 蓝色
+    gInfo.sagittalTangent.getProperty().setLineWidth(3)
+    gInfo.sagittalTangent.getProperty().setOpacity(0.8)
+    
+    // 创建法线边框（黄色）
+    const normalLineSource = vtkLineSource.newInstance()
+    const normalMapper = vtkMapper.newInstance()
+    normalMapper.setInputConnection(normalLineSource.getOutputPort())
+    gInfo.sagittalNormal = vtkActor.newInstance()
+    gInfo.sagittalNormal.setMapper(normalMapper)
+    gInfo.sagittalNormal.getProperty().setColor(1, 1, 0) // 黄色
+    gInfo.sagittalNormal.getProperty().setLineWidth(3)
+    gInfo.sagittalNormal.getProperty().setOpacity(0.8)
+    
+    gInfo.sagittalTangentLineSource = tangentLineSource; 
+    gInfo.sagittalNormalLineSource = normalLineSource;
+    //gInfo.sagittalTangentLineSource = normalLineSource; 
+    //gInfo.sagittalNormalLineSource = tangentLineSource;
+    viewAttributes[2].renderer.addActor(gInfo.sagittalTangent);
+    viewAttributes[2].renderer.addActor(gInfo.sagittalNormal);
+
+    view3D.renderer.addActor(gInfo.sagittalTangent);
+    view3D.renderer.addActor(gInfo.sagittalNormal);
+
+    viewSagittal.reslice.setOutputExtent(0, gInfo.dims[0]-1, 0, gInfo.dims[1]-1, 0, gInfo.dims[2]-1);
+    updateArchSagittal(Math.ceil(gInfo.archPointData.length / 2));
+}
+function updateArchSagittal(index) {
+    const { reslice, resliceActor } = viewSagittal;
+    const { currentPoint, tangent, normalDirection, verticalDirection, mat } = getTangentAndNormal(index, true);
+    const matZ = viewAttributes[2].resliceActor.getUserMatrix();
+    const imat = mat4.create();
+    mat4.invert(imat, mat);
+    //mat4.copy(imat, mat);
+    mat4.invert(imat, imat, matZ);
+    imat[12] = currentPoint[0];
+    imat[13] = currentPoint[1];
+    imat[14] = currentPoint[2];
+    //viewSagittal.reslice.setOutputOrigin(currentPoint);
+    //viewSagittal.reslice.setResliceAxes(imat);
+    //viewSagittal.resliceActor.setUserMatrix(imat);
+
+    //const camera = viewSagittal.renderer.getActiveCamera();
+    //camera.setFocalPoint(0, 0, 0);
+    //camera.setPosition(0, 0, 50);
+    //camera.setViewUp(verticalDirection);
+    //camera.setDirectionOfProjection(tangent);
+    //viewSagittal.renderer.resetCamera();
+    
+    const borderLength = 50;
+    // 更新切线边框（蓝色）- 沿着切线方向
+    const tangentStart = [
+        currentPoint[0] - tangent[0] * borderLength / 2,
+        currentPoint[1] - tangent[1] * borderLength / 2,
+        currentPoint[2] - tangent[2] * borderLength / 2
+    ]
+    const tangentEnd = [
+        currentPoint[0] + tangent[0] * borderLength / 2,
+        currentPoint[1] + tangent[1] * borderLength / 2,
+        currentPoint[2] + tangent[2] * borderLength / 2
+    ]
+    
+    gInfo.sagittalTangentLineSource.setPoint1(tangentStart)
+    gInfo.sagittalTangentLineSource.setPoint2(tangentEnd)
+    gInfo.sagittalTangentLineSource.modified()
+
+    // 更新法线边框（黄色）- 沿着法线方向
+    const normalStart = [
+        currentPoint[0] - normalDirection[0] * borderLength / 2,
+        currentPoint[1] - normalDirection[1] * borderLength / 2,
+        currentPoint[2] - normalDirection[2] * borderLength / 2
+    ]
+    const normalEnd = [
+        currentPoint[0] + normalDirection[0] * borderLength / 2,
+        currentPoint[1] + normalDirection[1] * borderLength / 2,
+        currentPoint[2] + normalDirection[2] * borderLength / 2
+    ]
+    
+    gInfo.sagittalNormalLineSource.setPoint1(normalStart)
+    gInfo.sagittalNormalLineSource.setPoint2(normalEnd)
+    gInfo.sagittalNormalLineSource.modified();
+    console.log(gInfo.sagittalNormalLineSource, gInfo.sagittalNormalLineSource.get());
+
+    const origin = [
+        (normalStart[0] + normalEnd[0]) / 2,
+        (normalStart[1] + normalEnd[1]) / 2,
+        (normalStart[2] + normalEnd[2]) / 2
+    ];
+    const zAxis = normalDirection;
+    const xAxis = vec3.create();
+    const yAxis = vec3.create();
+    vec3.cross(xAxis, zAxis, [0, 0, 1]);
+    if (vec3.length(xAxis) < 1e-6) {
+        vec3.cross(xAxis, zAxis, [0, 1, 0]);
+    }
+    vec3.normalize(xAxis, xAxis);
+    vec3.cross(yAxis, zAxis, xAxis);
+    vec3.normalize(yAxis, yAxis);
+    const m = mat4.create();
+    mat4.set(m, ...xAxis, 0, ...yAxis, 0, ...zAxis, 0, 0,0,0,1);
+    console.log(m, xAxis, yAxis, zAxis);
+    //gInfo.axes.setUserMatrix(m);
+    m[12] = currentPoint[0];
+    m[13] = currentPoint[1];
+    m[14] = currentPoint[2];
+    viewSagittal.reslice.setResliceAxes(m);
+    viewSagittal.resliceActor.setUserMatrix(m);
+    //viewSagittal.reslice.setOutputOrigin(origin);
+    
+    viewAttributes[2].renderWindow.render();
+    view3D.renderWindow.render();
+    viewVolume.renderWindow.render();
+    viewPanoramic.renderWindow.render();
+}
+function getTangentAndNormal(index, lastIndexReverse = false) {
+    const { archPointData } = gInfo;
+    const totalNumber = archPointData.length;
+
+    const resliceMatrix = viewAttributes[2].resliceActor.getUserMatrix()
+    const t = index / (totalNumber - 1) // t是0到1之间的插值系数，表示在牙弓曲线上的相对位置
+    let index1, index2, alpha
+
+    if (index === totalNumber - 1 && lastIndexReverse) {
+        // 最后一个切片，使用倒数第二个和最后一个点
+        index1 = totalNumber - 2
+        index2 = totalNumber - 1
+        alpha = 1.0
+    } else {
+        const curveIndex = t * (totalNumber - 1 - 1) // 将t映射到曲线点数组的索引范围内
+        // 获取左侧插值点的索引，使用floor向下取整，确保不超出数组范围
+        index1 = Math.min(Math.floor(curveIndex), totalNumber - 1)
+        // 获取右侧插值点的索引，确保不超出数组范围
+        index2 = Math.min(index1 + 1, totalNumber - 1)
+        alpha = curveIndex - index1 // 计算两点之间的精确插值系数
+    }
+    // 插值计算当前点
+    const rawCurrentPoint = [
+        archPointData[index1][0] * (1 - alpha) + archPointData[index2][0] * alpha,
+        archPointData[index1][1] * (1 - alpha) + archPointData[index2][1] * alpha,
+        archPointData[index1][2] * (1 - alpha) + archPointData[index2][2] * alpha,
+        1.0
+    ]
+    
+    // 应用变换
+    const transformedCurrentPoint = vec3ApplyMatrix4(rawCurrentPoint, resliceMatrix);
+    const currentPoint = [
+        transformedCurrentPoint[0],
+        transformedCurrentPoint[1],
+        transformedCurrentPoint[2]
+    ]
+    
+    // 计算切线方向
+    const rawTangent = [
+        archPointData[index1][0] - archPointData[index2][0],
+        archPointData[index1][1] - archPointData[index2][1],
+        archPointData[index1][2] - archPointData[index2][2],
+        0.0
+    ]
+    
+    // 变换并归一化切线
+    const transformedTangent = vec3ApplyMatrix4(rawTangent, resliceMatrix);
+    const tangent = normalize([
+        transformedTangent[0],
+        transformedTangent[1],
+        transformedTangent[2]
+    ])
+    
+    // // 计算法向和垂直方向
+    const rawUpVector = [0, 0, 1, 0]
+    const transformedUpVector = vec3ApplyMatrix4([0,0,1], resliceMatrix);
+    const upVector = normalize([
+        transformedUpVector[0],
+        transformedUpVector[1],
+        transformedUpVector[2]
+    ])
+    
+    // 计算法向量（垂直于切线和上方向）
+    let normalDirection = cross(tangent, upVector)
+    normalDirection = normalize(normalDirection)
+    //normalDirection = normalDirection.map(item => item * -1)
+    // 计算垂直方向（垂直于切线和法向）
+    let verticalDirection = cross(normalDirection, tangent)
+    verticalDirection = normalize(verticalDirection)
+    const mat = mat4.create();
+    //mat4.set(mat, ...tangent, 0, ...verticalDirection, 0, ...normalDirection, 0, 0,0,0,1);
+    mat4.set(mat, ...tangent, 0, ...normalDirection, 0, ...verticalDirection, 0, 0,0,0,1);
+    return { currentPoint, rawTangent, tangent, normalDirection, verticalDirection, mat }
 }
 function getVolumeCenter(index) {
     const slider = viewAttributes[index].slider;
@@ -611,6 +850,9 @@ if (false) {
     });
 }
 function handleArchData(data) {
+    gInfo.archPointData = data;
+    addSagittalNormalAndTangent();
+    viewSagittal.slider.max = data.length;
 
     // 创建线条几何体
     const points = vtkPoints.newInstance()
@@ -635,14 +877,21 @@ function handleArchData(data) {
     actorArch.getProperty().setColor(1, 1, 0) // 黄色，便于观察
     actorArch.getProperty().setLineWidth(3);
     actorArch.setUserMatrix(viewAttributes[2].resliceActor.getUserMatrix());
-    viewPanoramic.renderer.addActor(actorArch);
-    viewPanoramic.renderWindow.render();
+    viewAttributes[2].renderer.addActor(actorArch);
+    viewAttributes[2].renderWindow.render();
+    viewSagittal.renderer.addActor(actorArch);
+    viewSagittal.renderWindow.render();
     viewVolume.renderer.addActor(actorArch);
     viewVolume.renderWindow.render();
+    view3D.renderer.addActor(actorArch);
+    view3D.renderWindow.render();
 }
 function handleNiiData(data:ArrayBuffer) {
     const image = parseNiiData(data); 
-
+    console.log(image);
+    gInfo.dims = image.getDimensions();
+    gInfo.spacing = image.getSpacing();
+    viewSagittal.reslice.setInputData(image);
     widget.setImage(image);
     
     // add 3d 
@@ -699,7 +948,10 @@ function handleNiiData(data:ArrayBuffer) {
     viewAttributes.forEach((obj, i) => {
         obj.reslice.setInputData(image);
         obj.renderer.addActor(obj.resliceActor);
-        view3D.renderer.addActor(obj.resliceActor);
+        if (i == 31) {
+        } else {
+            view3D.renderer.addActor(obj.resliceActor);
+        }
         obj.sphereActors.forEach((actor) => {
             obj.renderer.addActor(actor);
             view3D.renderer.addActor(actor);
@@ -756,17 +1008,17 @@ function handleNiiData(data:ArrayBuffer) {
             );
         });
 
-      updateReslice({
-        viewType,
-        reslice,
-        actor: obj.resliceActor,
-        renderer: obj.renderer,
-        resetFocalPoint: true, // At first initilization, center the focal point to the image center
-        computeFocalPointOffset: true, // Allow to compute the current offset between display reslice center and display focal point
-        sphereSources: obj.sphereSources,
-        slider: obj.slider,
-      });
-      obj.interactor.render();
+        updateReslice({
+            viewType,
+            reslice,
+            actor: obj.resliceActor,
+            renderer: obj.renderer,
+            resetFocalPoint: true, // At first initilization, center the focal point to the image center
+            computeFocalPointOffset: true, // Allow to compute the current offset between display reslice center and display focal point
+            sphereSources: obj.sphereSources,
+            slider: obj.slider,
+        });
+        obj.interactor.render();
     });
 
     view3D.renderer.resetCamera();
@@ -787,39 +1039,41 @@ function handleNiiData(data:ArrayBuffer) {
     document.getElementById('slabNumber').max = maxNumberOfSlices;
 
     fetch('./implant.stl').then(res=>res.arrayBuffer()).then(async(buffer)=>{
-        const reader = stlBuffer2Reader(buffer);
-        const obb = infoObb(reader.getOutputData(), {more:true});
-        console.log(obb);
-        const mapper0 = vtkMapper.newInstance({scalarVisibility:false});
-        if (true) {
-            mapper0.setInputConnection(reader.getOutputPort());
-        } else {
-            mapper0.setInputData(reader.getOutputData());
-        }
-        const actorImplant = vtkActor.newInstance();
-        actorImplant.setMapper(mapper0);
-        actorImplant.getProperty().setColor(0,1,0);
-        const matrix = vtkMatrixBuilder
-            .buildFromDegree()
-            .identity()
-            //.translate(50, 50, 25)
-            .translate(0, 0, -5)
-            //.scale(5,5,5)
-            .getMatrix();
-        //actorImplant.setUserMatrix(matrix);
-        actorImplant.modified();
-        actorImplant.getMapper().update();
-        view3D.renderer.addActor(actorImplant);
-       
-        //view3D.renderer.addActor(actorCut);
-        //view3D.renderWindow.render();
-        
-        //implantList.push({ plane, cutter, actorCut, actorImplant });
-
-        oneImplantForAxes(reader, actorImplant, obb);
+        handleImplantData(buffer);
     });
 }
+function handleImplantData(buffer:ArrayBuffer) {
+    const reader = stlBuffer2Reader(buffer);
+    const obb = infoObb(reader.getOutputData(), {more:true});
+    console.log(obb);
+    const mapper0 = vtkMapper.newInstance({scalarVisibility:false});
+    if (true) {
+        mapper0.setInputConnection(reader.getOutputPort());
+    } else {
+        mapper0.setInputData(reader.getOutputData());
+    }
+    const actorImplant = vtkActor.newInstance();
+    actorImplant.setMapper(mapper0);
+    actorImplant.getProperty().setColor(0,1,0);
+    const matrix = vtkMatrixBuilder
+        .buildFromDegree()
+        .identity()
+        //.translate(50, 50, 25)
+        .translate(0, 0, -5)
+        //.scale(5,5,5)
+        .getMatrix();
+    //actorImplant.setUserMatrix(matrix);
+    actorImplant.modified();
+    actorImplant.getMapper().update();
+    view3D.renderer.addActor(actorImplant);
+   
+    //view3D.renderer.addActor(actorCut);
+    //view3D.renderWindow.render();
+    
+    //implantList.push({ plane, cutter, actorCut, actorImplant });
 
+    oneImplantForAxes(reader, actorImplant, obb);
+}
 function oneImplantForAxes(reader, actor, obb) {
     const tmp = { actor, obb, actors: [] };
     [0,1,2].forEach(idx=>{
