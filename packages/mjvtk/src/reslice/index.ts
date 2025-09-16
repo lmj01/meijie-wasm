@@ -459,7 +459,7 @@ function updateArchSagittal(index) {
         (normalStart[1] + normalEnd[1]) / 2,
         (normalStart[2] + normalEnd[2]) / 2
     ];
-    const zAxis = normalDirection;
+    const zAxis = tangent;
     const xAxis = vec3.create();
     const yAxis = vec3.create();
     vec3.cross(xAxis, zAxis, [0, 0, 1]);
