@@ -328,6 +328,7 @@ for (let i = 0; i < viewColors.length; i++) {
                 obj2.interactor.render();
             });
             updateCutter(i);
+            fullViewerForWidget(obj);
         });
     } else if (i == 3) {
         const slider = document.createElement('input');
@@ -346,9 +347,9 @@ for (let i = 0; i < viewColors.length; i++) {
 }
 if (true) {
     viewSagittal.renderer.addActor(viewSagittal.resliceActor);
-    view3D.renderer.addActor(viewSagittal.resliceActor);
-    viewVolume.renderer.addActor(viewSagittal.resliceActor);
-    viewPanoramic.renderer.addActor(viewSagittal.resliceActor);
+    //view3D.renderer.addActor(viewSagittal.resliceActor);
+    //viewVolume.renderer.addActor(viewSagittal.resliceActor);
+    //viewPanoramic.renderer.addActor(viewSagittal.resliceActor);
     viewSagittal.reslice.setOutputDimensionality(2);
     //viewSagittal.reslice.setOutputScalarType('Uint16Array');
     //viewSagittal.reslice.setScalarScale(65535 / 255);
@@ -372,7 +373,7 @@ function addSagittalNormalAndTangent() {
     gInfo.sagittalTangent = vtkActor.newInstance()
     gInfo.sagittalTangent.setMapper(tangentMapper)
     gInfo.sagittalTangent.getProperty().setColor(0, 0, 1) // 蓝色
-    gInfo.sagittalTangent.getProperty().setLineWidth(3)
+    gInfo.sagittalTangent.getProperty().setLineWidth(1)
     gInfo.sagittalTangent.getProperty().setOpacity(0.8)
     
     // 创建法线边框（黄色）
@@ -382,13 +383,11 @@ function addSagittalNormalAndTangent() {
     gInfo.sagittalNormal = vtkActor.newInstance()
     gInfo.sagittalNormal.setMapper(normalMapper)
     gInfo.sagittalNormal.getProperty().setColor(1, 1, 0) // 黄色
-    gInfo.sagittalNormal.getProperty().setLineWidth(3)
+    gInfo.sagittalNormal.getProperty().setLineWidth(1)
     gInfo.sagittalNormal.getProperty().setOpacity(0.8)
     
     gInfo.sagittalTangentLineSource = tangentLineSource; 
     gInfo.sagittalNormalLineSource = normalLineSource;
-    //gInfo.sagittalTangentLineSource = normalLineSource; 
-    //gInfo.sagittalNormalLineSource = tangentLineSource;
     viewAttributes[2].renderer.addActor(gInfo.sagittalTangent);
     viewAttributes[2].renderer.addActor(gInfo.sagittalNormal);
 
@@ -396,30 +395,80 @@ function addSagittalNormalAndTangent() {
     view3D.renderer.addActor(gInfo.sagittalNormal);
 
     viewSagittal.reslice.setOutputExtent(0, gInfo.dims[0]-1, 0, gInfo.dims[1]-1, 0, gInfo.dims[2]-1);
-    updateArchSagittal(Math.ceil(gInfo.archPointData.length / 2));
+    const defaultIndex = Math.ceil(gInfo.sliderMax / 2);
+    updateArchSagittal(defaultIndex);
+    viewSagittal.slider.max = gInfo.sliderMax;
+    viewSagittal.slider.value = defaultIndex;
+    
+    viewSagittal.GLWindow.getCanvas().addEventListener('wheel', (e)=>{
+        const delta = e.deltaY > 0 ? -1 : 1
+        const nowSlice = Number(viewSagittal.slider.value);
+        const newSlice = Math.max(0, Math.min(gInfo.sliderMax - 1, nowSlice + delta));
+        viewSagittal.slider.value = newSlice;
+        updateArchSagittal(newSlice);
+    });
+}
+function fullViewerForWidget(viewer) {
+    const { GLWindow, resliceActor, renderer, renderWindow } = viewer;
+    const canvas = GLWindow.getCanvas();
+    const imageData = resliceActor.getMapper().getInputData();
+    const [xMin, xMax, yMin, yMax, zMin, zMax] = imageData.getExtent();
+    const [sx, sy, sz] = imageData.getSpacing();
+    const [ox, oy, oz] = imageData.getOrigin();
+    const width  = (xMax - xMin + 1) * sx;
+    const height = (yMax - yMin + 1) * sy;
+    const camera = renderer.getActiveCamera();
+    const aspect = canvas.width / canvas.height;
+    if (aspect > width / height) {
+        camera.setParallelScale(height / 2);
+    } else {
+        camera.setParallelScale(width / 2 / aspect);
+    }
+    renderer.resetCameraClippingRange();
+    renderWindow.render();
+}
+function fitFullViewer(viewer) {
+    const { GLWindow, resliceActor, renderer, renderWindow } = viewer;
+    const canvas = GLWindow.getCanvas();
+    const imageData = resliceActor.getMapper().getInputData();
+    const [xMin, xMax, yMin, yMax, zMin, zMax] = imageData.getExtent();
+    const [sx, sy, sz] = imageData.getSpacing();
+    const [ox, oy, oz] = imageData.getOrigin();
+    const width  = (xMax - xMin + 1) * sx;
+    const height = (yMax - yMin + 1) * sy;
+    // image center 
+    const centerX = ox + (xMax - xMin) * sx / 2;
+    const centerY = oy + (yMax - yMin) * sy / 2;
+    const centerZ = oz + (zMax - zMin) * sz / 2;
+
+    const camera = renderer.getActiveCamera();
+    camera.setParallelProjection(true);
+    camera.setFocalPoint(centerX, centerY, centerZ);
+    camera.setPosition(centerX, centerY, centerZ + 1);
+    camera.setViewUp(0, 1, 0);
+
+    const aspect = canvas.width / canvas.height;
+    if (aspect > width / height) {
+        camera.setParallelScale(height / 2);
+    } else {
+        camera.setParallelScale(width / 2 / aspect);
+    }
+
+    // 不能同时设置两个
+    //renderer.resetCamera();
+    renderer.resetCameraClippingRange();
+    renderWindow.render();
 }
 function updateArchSagittal(index) {
     const { reslice, resliceActor } = viewSagittal;
     const { currentPoint, tangent, normalDirection, verticalDirection, mat } = getTangentAndNormal(index, true);
     const matZ = viewAttributes[2].resliceActor.getUserMatrix();
     const imat = mat4.create();
-    mat4.invert(imat, mat);
-    //mat4.copy(imat, mat);
-    mat4.invert(imat, imat, matZ);
-    imat[12] = currentPoint[0];
-    imat[13] = currentPoint[1];
-    imat[14] = currentPoint[2];
-    //viewSagittal.reslice.setOutputOrigin(currentPoint);
-    //viewSagittal.reslice.setResliceAxes(imat);
-    //viewSagittal.resliceActor.setUserMatrix(imat);
+    mat4.copy(imat, matZ);
+    imat[12] = 0;
+    imat[13] = 0;
+    imat[14] = 0;
 
-    //const camera = viewSagittal.renderer.getActiveCamera();
-    //camera.setFocalPoint(0, 0, 0);
-    //camera.setPosition(0, 0, 50);
-    //camera.setViewUp(verticalDirection);
-    //camera.setDirectionOfProjection(tangent);
-    //viewSagittal.renderer.resetCamera();
-    
     const borderLength = 50;
     // 更新切线边框（蓝色）- 沿着切线方向
     const tangentStart = [
@@ -452,7 +501,6 @@ function updateArchSagittal(index) {
     gInfo.sagittalNormalLineSource.setPoint1(normalStart)
     gInfo.sagittalNormalLineSource.setPoint2(normalEnd)
     gInfo.sagittalNormalLineSource.modified();
-    console.log(gInfo.sagittalNormalLineSource, gInfo.sagittalNormalLineSource.get());
 
     const origin = [
         (normalStart[0] + normalEnd[0]) / 2,
@@ -464,6 +512,7 @@ function updateArchSagittal(index) {
     const yAxis = vec3.create();
     vec3.cross(xAxis, zAxis, [0, 0, 1]);
     if (vec3.length(xAxis) < 1e-6) {
+        console.warn('z Axis is close to parallel');
         vec3.cross(xAxis, zAxis, [0, 1, 0]);
     }
     vec3.normalize(xAxis, xAxis);
@@ -471,25 +520,27 @@ function updateArchSagittal(index) {
     vec3.normalize(yAxis, yAxis);
     const m = mat4.create();
     mat4.set(m, ...xAxis, 0, ...yAxis, 0, ...zAxis, 0, 0,0,0,1);
-    console.log(m, xAxis, yAxis, zAxis);
-    //gInfo.axes.setUserMatrix(m);
     m[12] = currentPoint[0];
     m[13] = currentPoint[1];
     m[14] = currentPoint[2];
+    mat4.multiply(m, m, imat);
+    //mat4.multiply(m, imat, m);
     viewSagittal.reslice.setResliceAxes(m);
-    viewSagittal.resliceActor.setUserMatrix(m);
-    //viewSagittal.reslice.setOutputOrigin(origin);
+    //viewSagittal.resliceActor.setUserMatrix(m);
     
     viewAttributes[2].renderWindow.render();
     view3D.renderWindow.render();
     viewVolume.renderWindow.render();
     viewPanoramic.renderWindow.render();
+    fitFullViewer(viewSagittal);
+    fullViewerForWidget(viewAttributes[2]);
 }
 function getTangentAndNormal(index, lastIndexReverse = false) {
+    console.log('arch index', index);
     const { archPointData } = gInfo;
     const totalNumber = archPointData.length;
 
-    const resliceMatrix = viewAttributes[2].resliceActor.getUserMatrix()
+    const matZ = viewAttributes[2].resliceActor.getUserMatrix()
     const t = index / (totalNumber - 1) // t是0到1之间的插值系数，表示在牙弓曲线上的相对位置
     let index1, index2, alpha
 
@@ -515,7 +566,7 @@ function getTangentAndNormal(index, lastIndexReverse = false) {
     ]
     
     // 应用变换
-    const transformedCurrentPoint = vec3ApplyMatrix4(rawCurrentPoint, resliceMatrix);
+    const transformedCurrentPoint = vec3ApplyMatrix4(rawCurrentPoint, matZ);
     const currentPoint = [
         transformedCurrentPoint[0],
         transformedCurrentPoint[1],
@@ -531,7 +582,7 @@ function getTangentAndNormal(index, lastIndexReverse = false) {
     ]
     
     // 变换并归一化切线
-    const transformedTangent = vec3ApplyMatrix4(rawTangent, resliceMatrix);
+    const transformedTangent = vec3ApplyMatrix4(rawTangent, matZ);
     const tangent = normalize([
         transformedTangent[0],
         transformedTangent[1],
@@ -540,7 +591,7 @@ function getTangentAndNormal(index, lastIndexReverse = false) {
     
     // // 计算法向和垂直方向
     const rawUpVector = [0, 0, 1, 0]
-    const transformedUpVector = vec3ApplyMatrix4([0,0,1], resliceMatrix);
+    const transformedUpVector = vec3ApplyMatrix4([0,0,1], matZ);
     const upVector = normalize([
         transformedUpVector[0],
         transformedUpVector[1],
@@ -851,8 +902,9 @@ if (false) {
 }
 function handleArchData(data) {
     gInfo.archPointData = data;
-    addSagittalNormalAndTangent();
     viewSagittal.slider.max = data.length;
+    gInfo.sliderMax = data.length;
+    addSagittalNormalAndTangent();
 
     // 创建线条几何体
     const points = vtkPoints.newInstance()
@@ -879,39 +931,32 @@ function handleArchData(data) {
     actorArch.setUserMatrix(viewAttributes[2].resliceActor.getUserMatrix());
     viewAttributes[2].renderer.addActor(actorArch);
     viewAttributes[2].renderWindow.render();
-    viewSagittal.renderer.addActor(actorArch);
-    viewSagittal.renderWindow.render();
+    //viewSagittal.renderer.addActor(actorArch);
+    //viewSagittal.renderWindow.render();
     viewVolume.renderer.addActor(actorArch);
     viewVolume.renderWindow.render();
-    view3D.renderer.addActor(actorArch);
-    view3D.renderWindow.render();
+    //view3D.renderer.addActor(actorArch);
+    //view3D.renderWindow.render();
 }
-function handleNiiData(data:ArrayBuffer) {
-    const image = parseNiiData(data); 
-    console.log(image);
-    gInfo.dims = image.getDimensions();
-    gInfo.spacing = image.getSpacing();
-    viewSagittal.reslice.setInputData(image);
-    widget.setImage(image);
-    
+function addVolumeData(image) {
     // add 3d 
     const actor3d = vtkVolume.newInstance();
     const actor3dMapper = vtkVolumeMapper.newInstance();
     actor3dMapper.setInputData(image);
-    actor3dMapper.setSampleDistance(0.6);
+    actor3dMapper.setSampleDistance(0.9);
     actor3dMapper.setAutoAdjustSampleDistances(false) // 禁用自动调整采样距离
     actor3dMapper.setVolumetricScatteringBlending(0.1) // 设置体积散射混合（注释掉）
-    actor3dMapper.setBlendMode(0) // 设置混合模式（注释掉）
+    //actor3dMapper.setBlendMode(0) // 设置混合模式（注释掉）
     actor3dMapper.setIpScalarRange(0.0, 1.0) // 设置IP标量范围（注释掉）
     actor3d.setMapper(actor3dMapper);
     // 将灰度值范围改为1000-3000
     const ctfun = vtkColorTransferFunction.newInstance() // 创建颜色传递函数，用于定义体数据的颜色映射
-    // ctfun.addRGBPoint(200.0, 0.4, 0.5, 0.0) // 在值200处添加RGB颜色点(0.4,0.5,0.0)，即黄绿色
-    // ctfun.addRGBPoint(2000.0, 1.0, 1.0, 1.0) // 在值2000处添加RGB颜色点(1.0,1.0,1.0)，即白色
+    ctfun.addRGBPoint(200.0, 0.4, 0.5, 0.0) // 在值200处添加RGB颜色点(0.4,0.5,0.0)，即黄绿色
+    ctfun.addRGBPoint(2500.0, 1.0, 1.0, 1.0) // 在值2000处添加RGB颜色点(1.0,1.0,1.0)，即白色
     const ofun = vtkPiecewiseFunction.newInstance() // 创建分段函数，用于定义体数据的不透明度映射
     ofun.addPoint(0.0, 0.0) // 在值0处设置不透明度为0.0，即完全透明
     ofun.addPoint(255.0, 1.0) // 在值255处设置不透明度为1.0，即完全不透明
-    //actor3d.getProperty().setRGBTransferFunction(0, ctfun) // 将颜色传递函数设置到actor的第0个属性
+    actor3d.getProperty().setRGBTransferFunction(0, ctfun) // 将颜色传递函数设置到actor的第0个属性
     actor3d.getProperty().setScalarOpacity(0, ofun) // 将不透明度函数设置到actor的第0个属性
     actor3d.getProperty().setScalarOpacityUnitDistance(0, 1) // 设置标量不透明度单位距离为1，控制不透明度的衰减
     actor3d.getProperty().setInterpolationTypeToLinear() // 设置插值类型为线性插值，使渲染更平滑
@@ -920,12 +965,22 @@ function handleNiiData(data:ArrayBuffer) {
     actor3d.getProperty().setGradientOpacityMinimumOpacity(0, 0.0) // 设置梯度不透明度最小不透明度为0.0
     actor3d.getProperty().setGradientOpacityMaximumValue(0, 100) // 设置梯度不透明度最大值为100
     actor3d.getProperty().setGradientOpacityMaximumOpacity(0, 1.0) // 设置梯度不透明度最大不透明度为1.0
-    // actor3d.getProperty().setShade(true) // 启用阴影效果，使3D渲染更有立体感
+    actor3d.getProperty().setShade(true) // 启用阴影效果，使3D渲染更有立体感
     actor3d.getProperty().setAmbient(0.5) // 设置环境光系数为0.5，控制整体亮度
     actor3d.getProperty().setDiffuse(0.5) // 设置漫反射系数为0.5，控制表面反射强度
     actor3d.getProperty().setSpecular(0.5) // 设置镜面反射系数为0.5，控制高光效果
     actor3d.getProperty().setSpecularPower(8.0) // 设置镜面反射功率为8.0，控制高光的锐度
     viewVolume.renderer.addVolume(actor3d);
+}
+function handleNiiData(data:ArrayBuffer) {
+    const image = parseNiiData(data); 
+    console.log(image);
+    gInfo.dims = image.getDimensions();
+    gInfo.spacing = image.getSpacing();
+    viewSagittal.reslice.setInputData(image);
+    widget.setImage(image);
+   
+    addVolumeData(image);
     getInfoAxes().forEach(v=>{ 
         viewVolume.renderer.addActor(v.actor);
         viewPanoramic.renderer.addActor(v.actor);
@@ -980,6 +1035,7 @@ function handleNiiData(data:ArrayBuffer) {
                     sphereSources: obj.sphereSources,
                     slider: obj.slider,
                 });
+                fullViewerForWidget(v);
             });
 
             // Interactions in other views may change current plane
@@ -1004,6 +1060,7 @@ function handleNiiData(data:ArrayBuffer) {
                         sphereSources: obj.sphereSources,
                         slider: obj.slider,
                     });
+                    fullViewerForWidget(v);
                 }
             );
         });
@@ -1018,6 +1075,7 @@ function handleNiiData(data:ArrayBuffer) {
             sphereSources: obj.sphereSources,
             slider: obj.slider,
         });
+        fullViewerForWidget(obj);
         obj.interactor.render();
     });
 
