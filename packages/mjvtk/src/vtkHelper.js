@@ -10,6 +10,7 @@ import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
 import vtkArrowSource from '@kitware/vtk.js/Filters/Sources/ArrowSource';
 import vtkLineSource from '@kitware/vtk.js/Filters/Sources/LineSource';
 import vtkLineFilter from '@kitware/vtk.js/Filters/General/LineFilter';
+import vtkCoordinate from '@kitware/vtk.js/Rendering/Core/Coordinate';
 import vtkAppendPolyData from '@kitware/vtk.js/Filters/General/AppendPolyData';
 import vtkOBBTree from '@kitware/vtk.js/Filters/General/OBBTree';
 import vtkMatrixBuilder from '@kitware/vtk.js/Common/Core/MatrixBuilder.js'
@@ -363,3 +364,141 @@ export function vec3ApplyMatrix4(v3, m4, options = {}) {
 }
 
 
+export function addNewLayer(layer = 1, opt = {}) { 
+
+    const actor = opt.actor;
+    const arrow = opt.arrow;
+    const index = opt.index || 1;
+    const oldColor = actor.getProperty().getColor();
+    const renderer = vtkRenderer.newInstance();
+    renderer.setLayer(layer);
+    renderer.setErase(false);
+    renderer.setPreserveColorBuffer(true);
+    renderer.setPreserveDepthBuffer(true);
+    renderer.setViewport(0, 0, 1, 1);
+    renderer.addActor(actor);
+    if (arrow && !opt.noArrow) renderer.addActor(arrow);
+
+    const useCoordinate = true;
+    const coordinate = vtkCoordinate.newInstance();
+    coordinate.setCoordinateSystemToDisplay(); // 屏幕坐标系 
+
+    const picker = vtkCellPicker.newInstance();
+    picker.setPickFromList(1);
+    picker.setTolerance(0.005);
+    picker.initializePickList();
+    picker.addPickList(actor);
+    const one = {};
+    const on = (viewer, options = {})=>{
+        function getPick(cd, type) {
+            if (renderer != cd.pokedRenderer) {
+                return;
+            }
+            const mouse = cd.position;
+            const pos = [mouse.x, mouse.y, 0];
+            picker.pick(pos, renderer);
+            const actors = picker.getActors();
+            if (actors.length == 0) {
+                if (type == 'move') {
+                    one.isHover = false;
+                } else if (type == 'down') {
+                    one.isDown = false;
+                } else if (type == 'up') {
+                    one.isDown = false;
+                }
+            } else {
+                //console.log('name is ', actors[0].get().name); 
+                const pickPoint = picker.getPickPosition();
+                if (type == 'move') {
+                    if (one.isDown) {
+                        let deltaX = 0, deltaY = 0, deltaZ = 0;
+                        if (useCoordinate) {
+                            coordinate.setValue(...pos);
+                            const nowWorldPos = coordinate.getComputedWorldValue(renderer);
+                            deltaX = nowWorldPos[0] - one.lastWorldPos[0];
+                            deltaY = nowWorldPos[1] - one.lastWorldPos[1];
+                            deltaZ = nowWorldPos[2] - one.lastWorldPos[2];
+                            one.lastWorldPos = nowWorldPos;
+                        } else {
+                            deltaX = pickPoint[0] - one.lastWorldPos[0];
+                            deltaY = pickPoint[1] - one.lastWorldPos[1];
+                            deltaZ = pickPoint[2] - one.lastWorldPos[2];
+                            one.lastWorldPos = pickPoint;
+                        }
+                        if (options.cb) options.cb({deltaX, deltaY, deltaZ, type, index});
+                        if (false) {
+                            one.deltaX += deltaX;
+                            one.deltaY += deltaY;
+                            one.deltaZ += deltaZ;
+                            const originPos = actor.getPosition();
+                            if (index == 0) {
+                                actor.setPosition(originPos[0], originPos[1] + deltaY, originPos[2] + deltaZ);
+                            } else if (index == 1) {
+                                actor.setPosition(originPos[0] + deltaX, originPos[1], originPos[2] + deltaZ);
+                            } else if (index == 2) {
+                                actor.setPosition(originPos[0] + deltaX, originPos[1] + deltaY, originPos[2]);
+                            }
+                        }
+                    } else {
+                        one.isHover = true;
+                    }
+                } else if (type == 'down') {
+                    if (one.isHover) {
+                        if (useCoordinate) {
+                            coordinate.setValue(...pos);
+                            one.lastWorldPos = coordinate.getComputedWorldValue(renderer);
+                        } else {
+                            one.lastWorldPos = pickPoint;
+                        }
+                        one.isDown = true;
+                        one.deltaX = 0;
+                        one.deltaY = 0;
+                        one.deltaZ = 0;
+                        if (options.cb) options.cb({type, index, one});
+                    }
+                } else if (type == 'up') {
+                    if (one.isDown) {
+                        if (options.cb) options.cb({type, index});
+                    }
+                    one.isDown = false;
+                    one.lastWorldPos = null;
+                } else if (type == 'downR') {
+                    if (options.cb) options.cb({type, actors: picker.getActors(),index});
+                }
+            }
+            //console.log('isHover', one.isHover);
+            if (one.isHover) {
+                actor.getProperty().setColor(1.0, 1.0, 0.0);
+            } else {
+                actor.getProperty().setColor(oldColor);
+            }
+            // 禁用第一层的交互事件
+            viewer.renderer.setInteractive(!one.isHover);
+            viewer.renderWindow.render();
+        }
+        if (!one.init) {
+            one.init = true;
+            viewer.renderWindow.addRenderer(renderer);
+            renderer.setActiveCamera(viewer.renderer.getActiveCamera());
+            const interactor = viewer.renderWindow.getInteractor();
+            interactor.onLeftButtonPress((cd)=>{
+                getPick(cd, 'down');
+            });
+            interactor.onMouseMove((cd)=>{
+                getPick(cd, 'move');
+            });
+            interactor.onLeftButtonRelease((cd)=>{
+                getPick(cd, 'up');
+            });
+            interactor.onRightButtonPress((cd)=>{
+                getPick(cd, 'downR');
+            });
+        }
+    }
+    function getRender() { return renderer; }
+    return {
+        on,
+        one,
+        getRender,
+    };
+}

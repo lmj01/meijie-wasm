@@ -65,21 +65,3 @@ export function generateUniformCurve(originalPoints, numPoints) {
     }
     return uniformCurve
 }
-// 辅助函数
-export function cross(a, b) {
-  return [
-    a[1]*b[2] - a[2]*b[1],
-    a[2]*b[0] - a[0]*b[2],
-    a[0]*b[1] - a[1]*b[0]
-  ];
-}
-
-export function normalize(v) {
-  const len = Math.sqrt(v[0]**2 + v[1]**2 + v[2]**2);
-  if (len > 0) {
-    v[0] /= len;
-    v[1] /= len;
-    v[2] /= len;
-  }
-  return v
-}
