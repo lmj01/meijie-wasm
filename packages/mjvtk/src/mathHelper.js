@@ -63,5 +63,8 @@ export function generateUniformCurve(originalPoints, numPoints) {
         ]
         uniformCurve.push(newPoint)
     }
-    return uniformCurve
+    return  {
+        points: uniformCurve,
+        length: totalLength,
+    }
 }

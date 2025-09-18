@@ -33,7 +33,6 @@ import vtkCutter from '@kitware/vtk.js/Filters/Core/Cutter';
 import vtkOrientationMarkerWidget from '@kitware/vtk.js/Interaction/Widgets/OrientationMarkerWidget';
 import vtkResliceCursorWidget from '@kitware/vtk.js/Widgets/Widgets3D/ResliceCursorWidget';
 import vtkWidgetManager from '@kitware/vtk.js/Widgets/Core/WidgetManager';
-import vtkCPRManipulator from '@kitware/vtk.js/Widgets/Manipulators/CPRManipulator';
 
 import vtkSphereSource from '@kitware/vtk.js/Filters/Sources/SphereSource';
 import { CaptureOn } from '@kitware/vtk.js/Widgets/Core/WidgetManager/Constants';
@@ -196,7 +195,7 @@ for (let i = 0; i < viewColors.length; i++) {
         obj.widgetManager.enablePicking();
         // Use to update all renderers buffer when actors are moved
         obj.widgetManager.setCaptureOn(CaptureOn.MOUSE_MOVE);
-    } else if (i == 3) {
+    } else if ([3,5].includes(i)) {
         obj.interactor.setInteractorStyle(vtkInteractorStyleImage.newInstance());
     } else {
         obj.interactor.setInteractorStyle(
@@ -204,24 +203,31 @@ for (let i = 0; i < viewColors.length; i++) {
         );
     }
 
-    obj.reslice = vtkImageReslice.newInstance();
-    obj.reslice.setSlabMode(SlabMode.MEAN);
-    obj.reslice.setSlabNumberOfSlices(1);
-    obj.reslice.setTransformInputSampling(false);
-    obj.reslice.setAutoCropOutput(false);
-    obj.reslice.setOutputDimensionality(2);
-    obj.resliceMapper = vtkImageMapper.newInstance();
-    obj.resliceMapper.setInputConnection(obj.reslice.getOutputPort());
-    obj.resliceActor = vtkImageSlice.newInstance();
-    obj.resliceActor.setMapper(obj.resliceMapper);
-    obj.resliceActor.getProperty().setColorWindow(2000);
-    obj.resliceActor.getProperty().setColorLevel(500);
+    if (i == 5) {
+        obj.resliceMapper = vtkImageCPRMapper.newInstance();
+        obj.resliceMapper.setBackgroundColor(0, 0, 0, 0);
+        obj.resliceActor = vtkImageSlice.newInstance();
+        obj.resliceActor.setMapper(obj.resliceMapper);
+    } else {
+        obj.reslice = vtkImageReslice.newInstance();
+        obj.reslice.setSlabMode(SlabMode.MEAN);
+        obj.reslice.setSlabNumberOfSlices(1);
+        obj.reslice.setTransformInputSampling(false);
+        obj.reslice.setAutoCropOutput(false);
+        obj.reslice.setOutputDimensionality(2);
+        obj.resliceMapper = vtkImageMapper.newInstance();
+        obj.resliceMapper.setInputConnection(obj.reslice.getOutputPort());
+        obj.resliceActor = vtkImageSlice.newInstance();
+        obj.resliceActor.setMapper(obj.resliceMapper);
+        obj.resliceActor.getProperty().setColorWindow(2000);
+        obj.resliceActor.getProperty().setColorLevel(500);
+    }
     obj.sphereActors = [];
     obj.sphereSources = [];
 
     // Create sphere for each 2D views which will be displayed in 3D
     // Define origin, point1 and point2 of the plane used to reslice the volume
-    if (![4,5,6].includes(i)) {
+    if (![3,4,5,6].includes(i)) {
         for (let j = 0; j < 3; j++) {
             const sphere = vtkSphereSource.newInstance();
             // 辅组球体的半径
@@ -245,13 +251,13 @@ for (let i = 0; i < viewColors.length; i++) {
         viewSagittal.reslice.setAutoCropOutput(true);
     } else if (i == 5) {
         viewPanoramic = obj;
-        window.viewerPanoramic = obj;
+        window.viewPanoramic = obj;
     } else if (i == 6) {
         viewVolume = obj;
         window.viewerVolume = obj;
-    } else {
+    } else if (i == 4) {
         view3D = obj;
-        window.v3d = obj;
+        window.view3D = obj;
     }
 
     if (true) {
@@ -479,11 +485,6 @@ function updateArchSagittal(index) {
     const { reslice, resliceActor } = viewSagittal;
     const { currentPoint, tangent, normalDirection, verticalDirection, mat } = getTangentAndNormal(index, true);
     const matZ = viewAttributes[2].resliceActor.getUserMatrix();
-    const imat = mat4.create();
-    mat4.copy(imat, matZ);
-    imat[12] = 0;
-    imat[13] = 0;
-    imat[14] = 0;
 
     const borderLength = 50;
     // 更新切线边框（蓝色）- 沿着切线方向
@@ -498,8 +499,8 @@ function updateArchSagittal(index) {
         currentPoint[2] + tangent[2] * borderLength / 2
     ]
     
-    gInfo.sagittalTangentLineSource.setPoint1(tangentStart)
-    gInfo.sagittalTangentLineSource.setPoint2(tangentEnd)
+    gInfo.sagittalTangentLineSource.setPoint1(vec3ApplyMatrix4(tangentStart,matZ))
+    gInfo.sagittalTangentLineSource.setPoint2(vec3ApplyMatrix4(tangentEnd, matZ))
     gInfo.sagittalTangentLineSource.modified()
 
     // 更新法线边框（黄色）- 沿着法线方向
@@ -514,14 +515,14 @@ function updateArchSagittal(index) {
         currentPoint[2] + normalDirection[2] * borderLength / 2
     ]
     
-    gInfo.sagittalNormalLineSource.setPoint1(normalStart)
-    gInfo.sagittalNormalLineSource.setPoint2(normalEnd)
+    gInfo.sagittalNormalLineSource.setPoint1(vec3ApplyMatrix4(normalStart,matZ))
+    gInfo.sagittalNormalLineSource.setPoint2(vec3ApplyMatrix4(normalEnd,matZ))
     gInfo.sagittalNormalLineSource.modified();
 
     const zAxis = tangent;
     const xAxis = vec3.create();
     const yAxis = vec3.create();
-    vec3.cross(xAxis, zAxis, [0, 0, 1]);
+    vec3.cross(xAxis, zAxis, [0, 0, -1]);
     if (vec3.length(xAxis) < 1e-6) {
         console.warn('z Axis is close to parallel');
         vec3.cross(xAxis, zAxis, [0, 1, 0]);
@@ -533,10 +534,10 @@ function updateArchSagittal(index) {
     const m1 = mat4.create();
     mat4.set( m, ...xAxis, 0, ...yAxis, 0, ...zAxis, 0, 0,0,0,1);
     mat4.set(m1, ...xAxis, 0, ...yAxis, 0, ...zAxis, 0, 0,0,0,1);
-    m[12] = currentPoint[0];
-    m[13] = currentPoint[1];
-    m[14] = currentPoint[2];
-    mat4.multiply(m, m, imat);
+    const wpos = vec3ApplyMatrix4(currentPoint, matZ);
+    m[12] = wpos[0];
+    m[13] = wpos[1];
+    m[14] = wpos[2];
     viewSagittal.reslice.setResliceAxes(m);
   
     const im1 = mat4.create();
@@ -553,7 +554,8 @@ function updateArchSagittal(index) {
         });
         const m2 = mat4.create();
         //mat4.multiply(m2, m1, imat); // 可见，但朝向法线方向
-        mat4.multiply(m2, im1, imat); // 方向正确
+        //mat4.multiply(m2, im1, imat); // 方向正确
+        mat4.multiply(m2, im1, []); // 方向正确
         implant.actors[3].actorCut.setUserMatrix(m2);
         implant.actors[3].actorCut.modified();
     });
@@ -566,11 +568,9 @@ function updateArchSagittal(index) {
     fullViewerForWidget(viewAttributes[2]);
 }
 function getTangentAndNormal(index, lastIndexReverse = false) {
-    //console.log('arch index', index);
     const { archPointData } = gInfo;
     const totalNumber = archPointData.length;
 
-    const matZ = viewAttributes[2].resliceActor.getUserMatrix()
     const t = index / (totalNumber - 1) // t是0到1之间的插值系数，表示在牙弓曲线上的相对位置
     let index1, index2, alpha
 
@@ -596,7 +596,7 @@ function getTangentAndNormal(index, lastIndexReverse = false) {
     ]
     
     // 应用变换
-    const transformedCurrentPoint = vec3ApplyMatrix4(rawCurrentPoint, matZ);
+    const transformedCurrentPoint = [...rawCurrentPoint];
     const currentPoint = [
         transformedCurrentPoint[0],
         transformedCurrentPoint[1],
@@ -612,7 +612,7 @@ function getTangentAndNormal(index, lastIndexReverse = false) {
     ]
     
     // 变换并归一化切线
-    const transformedTangent = vec3ApplyMatrix4(rawTangent, matZ);
+    const transformedTangent = [...rawTangent];
     const tangent = [
         transformedTangent[0],
         transformedTangent[1],
@@ -622,7 +622,7 @@ function getTangentAndNormal(index, lastIndexReverse = false) {
     
     // // 计算法向和垂直方向
     const rawUpVector = [0, 0, 1, 0]
-    const transformedUpVector = vec3ApplyMatrix4([0,0,1], matZ);
+    const transformedUpVector = [0,0,1];
     const upVector = [
         transformedUpVector[0],
         transformedUpVector[1],
@@ -634,7 +634,6 @@ function getTangentAndNormal(index, lastIndexReverse = false) {
     const normalDirection = [];
     vec3.cross(normalDirection, tangent, upVector);
     vec3.normalize(normalDirection, normalDirection);
-    //normalDirection = normalDirection.map(item => item * -1)
     // 计算垂直方向（垂直于切线和法向）
     const verticalDirection = [];
     vec3.cross(verticalDirection, normalDirection, tangent)
@@ -716,58 +715,10 @@ function updateReslice(
         interactionContext.computeFocalPointOffset
     );
     view3D.renderWindow.render();
-    if (modified) {
-        // create a rotateed basic data array to orientaed the CPR 
-        centerline.getPointData().setTensors(
-            vtkDataArray.newInstance({
-                name: 'Orientation',
-                numberOfComponents: 16, 
-                values: Float32Array.from(va[0].resliceActor.getMatrix())
-            })
-        );
-        centerline.modified();
-    }
     updateCutPlanes();
     return modified;
 }
 
-const centerline = vtkPolyData.newInstance();
-const cprActor = vtkImageSlice.newInstance();
-const cprMapper = vtkImageCPRMapper.newInstance();
-cprMapper.setBackgroundColor(0, 0, 0, 0);
-cprActor.setMapper(cprMapper);
-cprMapper.setWidth(400);
-const cprManipulator = vtkCPRManipulator.newInstance({
-    cprActor,
-});
-
-// set positions of the cuenterline (model coordinates)
-function setCenterlineData(centerPoints:Float32Array) {
-    const nPoints = centerPoints.length / 3;
-    centerline.getPoints().setData(centerPoints, 3);
-    // set polylines of the centerline
-    const lines = new Uint16Array(1 + nPoints);
-    lines[0] = nPoints;
-    for (let i = 0; i < nPoints.length; i++) {
-        lines[i + 1] = i;
-    }
-    centerline.getLines().setData(lines);
-
-    // create a rotateed basic data array to orientaed the CPR 
-    centerline.getPointData().setTensors(
-        vtkDataArray.newInstance({
-            name: 'Orientation',
-            numberOfComponents: 16, 
-            values: Float32Array.from(va[0].resliceActor.getMatrix())
-        })
-    );
-    centerline.modified();
-
-    const midPointDistance = cprMapper.getHeight() / 2;
-    const { worldCoords } = cprManipulator.distanceEvent(midPointDistance);
-    widget.setManipulator(cprManipulator);
-    viewPanoramic.renderWindow.render();
-}
 function qformToMatrix(hdr) {
     const b = hdr.quatern_b;
     const c = hdr.quatern_c;
@@ -845,7 +796,7 @@ function parseNiiData(data:ArrayBuffer) {
         }
     }
     const origin = [M[12],M[13],M[14]];
-    console.log(M, dir, origin);
+    //console.log(M, dir, origin);
 
     let scalarArray;
     switch(meta.header.datatypeCode) {
@@ -931,39 +882,39 @@ if (false) {
         inPoints.forEach((pt)=>{
             archPointData.push([pt[0], pt[1], pt[2]]);
         });
-        archPointData = generateUniformCurve(archPointData, 800);
-        handleArchData(archPointData);
+        handleArchData(generateUniformCurve(archPointData, 800));
     });
 }
 function handleArchData(data) {
-    gInfo.archPointData = data;
-    viewSagittal.slider.max = data.length;
-    gInfo.sliderMax = data.length;
+    gInfo.archPointData = data.points;
+    gInfo.archLength = data.length;
+    viewSagittal.slider.max = data.points.length;
+    gInfo.sliderMax = data.points.length;
     addSagittalNormalAndTangent();
 
-    // 创建线条几何体
-    const points = vtkPoints.newInstance()
-    const lines = vtkCellArray.newInstance()
-    // 添加曲线点
-    data.forEach((pt, index) => {
-        points.insertNextPoint(pt[0], pt[1], pt[2]);
-        if (index > 0) {
-            lines.insertNextCell([index - 1, index])
-        }
-    })
-    // 创建polyData
-    const polyData = vtkPolyData.newInstance()
-    polyData.setPoints(points)
-    polyData.setLines(lines)
+    // Z轴的矩阵
+    const matZ = viewAttributes[2].resliceActor.getUserMatrix();
+
+    const poly = vtkPolyData.newInstance();
+    const pointsData = Float32Array.from(data.points.flat());
+    const nPoints = pointsData.length / 3;
+    poly.getPoints().setData(pointsData, 3);
+
+    const lines = new Uint16Array(1 + nPoints);
+    lines[0] = nPoints;
+    for (let i = 0; i < nPoints; i++) { 
+        lines[i + 1] = i;
+    }
+    poly.getLines().setData(lines);
     // 创建映射器和actor
     const mapper = vtkMapper.newInstance()
-    mapper.setInputData(polyData)
+    mapper.setInputData(poly)
 
     const actorArch = vtkActor.newInstance()
     actorArch.setMapper(mapper)
     actorArch.getProperty().setColor(1, 1, 0) // 黄色，便于观察
     actorArch.getProperty().setLineWidth(3);
-    actorArch.setUserMatrix(viewAttributes[2].resliceActor.getUserMatrix());
+    actorArch.setUserMatrix(matZ);
     viewAttributes[2].renderer.addActor(actorArch);
     viewAttributes[2].renderWindow.render();
     //viewSagittal.renderer.addActor(actorArch);
@@ -972,6 +923,91 @@ function handleArchData(data) {
     viewVolume.renderWindow.render();
     //view3D.renderer.addActor(actorArch);
     //view3D.renderWindow.render();
+    
+    // 添加cpr全景图
+    const poly1 = vtkPolyData.newInstance();
+    const bounds = gInfo.image.getBounds();
+    const center = gInfo.image.getCenter();
+    const orient = [], pts = [];
+    const imatZ = mat4.create();
+    mat4.invert(imatZ, matZ);
+    console.log('volume size', bounds, center);
+    if (true) {
+        const panoramicWidth = gInfo.archLength / gInfo.spacing[0];
+        const panoramicHeight = gInfo.dims[2] / gInfo.spacing[2];
+        for (let i = 0; i < panoramicWidth; i++) {  
+            const { currentPoint, mat, verticalDirection } = getTangentAndNormal(i+1, true);
+            pts.push(...currentPoint);
+            //pts.push(...vec3ApplyMatrix4(currentPoint, imatZ));
+            console.log(i, currentPoint, vec3ApplyMatrix4(currentPoint, imatZ));
+            if (true) {
+                const m1 = mat.reduce((a,c,i)=>a.push(c)&&a,[]);
+                //mat4.multiply(m1, m1, imatZ);
+                orient.push(...m1);
+                //console.log(i,currentPoint, m1);
+            } else {
+                orient.push(1,0,0,0,
+                        0,1,0,0,
+                        0,0,1,0,
+                        0,0,0,1
+                           );
+            }
+        }
+        viewPanoramic.resliceMapper.setWidth(panoramicWidth);
+    } else {
+        // 从中心线沿着Z轴取值
+        for (let i = 0; i < gInfo.volumeSize[2]; i+=gInfo.spacing[2]) { 
+            pts.push(...[center[0], center[1], bounds[4] + i*gInfo.spacing[2]]);
+            orient.push(1,0,0,0,
+                    0,1,0,0,
+                    0,0,1,0,
+                    0,0,0,1
+                       );
+        }
+        viewPanoramic.resliceMapper.setWidth(gInfo.volumeSize[2]);
+    }
+    if (true) {
+        const pointsData = Float32Array.from(pts);
+        const nPoints = pointsData.length / 3;
+        poly1.getPoints().setData(pointsData, 3);
+
+        const lines = new Uint16Array(1 + nPoints);
+        lines[0] = nPoints;
+        for (let i = 0; i < nPoints; i++) { 
+            lines[i + 1] = i;
+        }
+        poly1.getLines().setData(lines);
+        poly1.getPointData().setTensors(
+            vtkDataArray.newInstance({
+                name: 'Orientation',
+                numberOfComponents: 16,
+                values: Float32Array.from(orient),
+            })
+        );
+        poly1.modified();
+    }
+    if (true) {
+        viewPanoramic.resliceMapper.setImageData(gInfo.image);
+        viewPanoramic.resliceMapper.setCenterlineData(poly1);
+        //viewPanoramic.resliceMapper.useStraightenedMode();
+    } else {
+        viewPanoramic.resliceMapper.setInputData(gInfo.image, 0);
+        viewPanoramic.resliceMapper.setInputData(poly1, 1);
+    }
+    viewPanoramic.resliceMapper.setBackgroundColor(20,5,1,255);
+    //viewPanoramic.resliceActor.setUserMatrix(matZ);
+    console.log('panoramic size ',viewPanoramic.resliceMapper.getWidth(),viewPanoramic.resliceMapper.getHeight());
+    viewPanoramic.renderer.addActor(viewPanoramic.resliceActor);
+    updatePanoramicView(false);
+}
+function updatePanoramicView(isFull) {
+    if (isFull) {
+        fitFullViewer(viewPanoramic);
+        return;
+    } else {
+        viewPanoramic.renderer.resetCamera();
+        viewPanoramic.renderWindow.render();
+    }
 }
 function addVolumeData(image) {
     // add 3d 
@@ -1020,7 +1056,6 @@ function addVolumeData(image) {
 }
 function handleNiiData(data:ArrayBuffer) {
     const image = parseNiiData(data); 
-    console.log(image);
     gInfo.dims = image.getDimensions();
     gInfo.spacing = image.getSpacing();
     gInfo.image = image;
@@ -1031,12 +1066,12 @@ function handleNiiData(data:ArrayBuffer) {
     gInfo.volumeSize[2] = bounds[5] - bounds[4];
     viewSagittal.reslice.setInputData(image);
     widget.setImage(image);
+    
    
     addVolumeData(image);
     viewVolume.renderer.resetCamera();
     viewVolume.renderWindow.render();
-    viewPanoramic.renderer.resetCamera();
-    viewPanoramic.renderWindow.render();
+    updatePanoramicView();
 
     // Create image outline in 3D view
     const outline = vtkOutlineFilter.newInstance();
@@ -1127,15 +1162,6 @@ function handleNiiData(data:ArrayBuffer) {
     view3D.renderer.resetCameraClippingRange();
     view3D.renderWindow.render();
     
-
-    //setCenterlineData(archPointData);
-
-    //viewPanoramic.renderer.resetCamera();
-    //viewPanoramic.renderer.resetCameraClippingRange();
-    //viewPanoramic.reslice.setInputData(image);
-    //viewPanoramic.resliceAcotr.setUserMatrix(viewPanoramic.reslice.getResliceAxes());
-    //viewPanoramic.renderWindow.render();
-
     // set max number of slices to slider.
     const maxNumberOfSlices = vec3.length(image.getDimensions());
     document.getElementById('slabNumber').max = maxNumberOfSlices;
@@ -1214,14 +1240,10 @@ function oneImplantForAxes(reader, actor, obb, opt = {}) {
         if (cWidgetIndex.includes(idx)) {
             viewAttributes[idx].renderer.addActor(actorCut);
             viewAttributes[idx].renderWindow.render();
-            if (true || !gInfo.useLayerTwo) {
-                viewPanoramic.renderer.addActor(actorCut);
-            }
         }
         if (idx == 3) {
             viewSagittal.renderer.addActor(actorCut);
-            if (true || !gInfo.useLayerTwo) {
-                viewPanoramic.renderer.addActor(actorCut);
+            if (!gInfo.useLayerTwo) {
                 viewVolume.renderer.addActor(actorCut);
             }
         }
@@ -1354,7 +1376,6 @@ function updateCutPlanes() {
         const x = center[0] - (Number(viewAttributes[0].slider.max) / 2 - Number(viewAttributes[0].slider.value)) * spacing[0];
         const y = center[1] - (Number(viewAttributes[1].slider.max) / 2 - Number(viewAttributes[1].slider.value)) * spacing[1];
         const z = center[2] - (Number(viewAttributes[2].slider.max) / 2 - Number(viewAttributes[2].slider.value)) * spacing[2];
-        console.log(x,y,z);
         cWidgetIndex.forEach(idx=>{
             if (idx == 0) {
                 wPos[idx] = x;
@@ -1523,6 +1544,7 @@ inputNiiFile.addEventListener('change', async (ev) => {
     } else {
         handleNiiData(arrayBuffer); 
     }
+    ev.target.value = null;
 });
 const inputArchCurveFile = document.getElementById('inputArchCurveFile');
 inputArchCurveFile.addEventListener('change', async(ev) => {
@@ -1534,8 +1556,9 @@ inputArchCurveFile.addEventListener('change', async(ev) => {
     inPoints.forEach((pt)=>{
         archPointData.push([pt[0], pt[1], pt[2]]);
     });
-    archPointData = generateUniformCurve(archPointData, 800);
-    handleArchData(archPointData);
+    console.log('origin arch data', archPointData);
+    handleArchData(generateUniformCurve(archPointData, 800));
+    ev.target.value = null;
 });
 
 
